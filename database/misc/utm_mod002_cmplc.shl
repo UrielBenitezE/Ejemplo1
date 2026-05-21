@@ -1,0 +1,20 @@
+:
+# utm_mod002_cmplc.shl 
+# AUDIT TRAIL:  9.3.32
+# Throw away C compile for general release  9.3.32
+# AUDIT TRAIL END
+#
+cd $BANNER_LINKS
+make -f $BANNER_HOME/general/c/sctproc.mk szpcanp CHECKOPT="sqlcheck=full userid=baninst1/$DFLT_BANINST1_PASS"
+make -f $BANNER_HOME/general/c/sctproc.mk szpcoav CHECKOPT="sqlcheck=full userid=baninst1/$DFLT_BANINST1_PASS"
+make -f $BANNER_HOME/general/c/sctproc.mk szpeqiv CHECKOPT="sqlcheck=full userid=baninst1/$DFLT_BANINST1_PASS"
+make -f $BANNER_HOME/general/c/sctproc.mk szpgchg CHECKOPT="sqlcheck=full userid=baninst1/$DFLT_BANINST1_PASS"
+make -f $BANNER_HOME/general/c/sctproc.mk szproll CHECKOPT="sqlcheck=full userid=baninst1/$DFLT_BANINST1_PASS"
+make -f $BANNER_HOME/general/c/sctproc.mk szptrns CHECKOPT="sqlcheck=full userid=baninst1/$DFLT_BANINST1_PASS"
+make -f $BANNER_HOME/general/c/sctproc.mk szrroll CHECKOPT="sqlcheck=full userid=baninst1/$DFLT_BANINST1_PASS"
+make -f $BANNER_HOME/general/c/sctproc.mk szpamec CHECKOPT="sqlcheck=full userid=baninst1/$DFLT_BANINST1_PASS"
+make -f $BANNER_HOME/general/c/sctproc.mk szpcada CHECKOPT="sqlcheck=full userid=baninst1/$DFLT_BANINST1_PASS"
+make -f $BANNER_HOME/general/c/sctproc.mk szpcasc CHECKOPT="sqlcheck=full userid=baninst1/$DFLT_BANINST1_PASS"
+make -f $BANNER_HOME/general/c/sctproc.mk szpcasd CHECKOPT="sqlcheck=full userid=baninst1/$DFLT_BANINST1_PASS"
+make -f $BANNER_HOME/general/c/sctproc.mk szpcmes CHECKOPT="sqlcheck=full userid=baninst1/$DFLT_BANINST1_PASS"
+make -f $BANNER_HOME/general/c/sctproc.mk szpmrks CHECKOPT="sqlcheck=full userid=baninst1/$DFLT_BANINST1_PASS"

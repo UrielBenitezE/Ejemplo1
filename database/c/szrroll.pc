@@ -1,0 +1,2441 @@
+/*TMCI18N BEGIN HEADER*/
+#if !defined( tmBundle_EXISTS )
+/* No Initialisation Required */
+#include "tmcilib.h"
+static struct TMBundle tmBundle = {"SZRROLL.PC",NULL,NULL,NULL,NULL};
+#define tmBundle_EXISTS
+#endif
+/*TMCI18N END HEADER*/
+
+
+/******************************************************************************/
+/*                                                                            */
+/* szrroll.pc                                                                 */
+/* Copyright 2024 Ellucian Company L.P. and its affiliates.                   */
+/*                                                                            */
+/******************************************************************************/
+/*                                                                            */
+/*                     CONFIDENTIAL BUSINESS INFORMATION                      */
+/*                                                                            */
+/******************************************************************************/
+/* This software contains confidential and proprietary information of         */
+/* Ellucian or its subsidiaries.                                              */
+/* Use of this software is limited to Ellucian licensees, and is subject to   */
+/* the terms and conditions of one or more written license agreements between */
+/* Ellucian and such licensees.                                               */
+/******************************************************************************/
+/*                                                                            */
+/*      Project : UTM                                                         */
+/* Modification : 002 - Mejora a la asistencia, calificaciones e HA           */
+/*  Description : SHRROL has been modified for this modification.             */
+/*                                                                            */
+/*                                                                            */
+/******************************************************************************/
+/*                                                                            */
+/*  AUDIT TRAIL: 8.7.0 [UTM:002.1.0]                          INI    DATE     */
+/*  --------------------------------------------------------- --- ----------- */
+/*  1. Initial creation of the szrroll process.               MKU 22-DEC-2015 */
+/*  --------------------------------------------------------- --- ----------- */
+/*  AUDIT TRAIL: 8.31.2 [MOD:02.2.0]                          INI    DATE     */
+/* ---------------------------------------------------------- --- ----------- */
+/* 1. STUDENT version updgrade from 8.7 to 8.31.2             LMR 16/Dic/2024 */
+/*    -------------------------------------------                             */
+/* Student version updated.                                                   */
+/*  --------------------------------------------------------- --- ----------- */
+/*  AUDIT TRAIL: END                                                          */
+/*                                                                            */
+/******************************************************************************/
+
+/******************************************************************************/
+/*                                                                            */
+/* INCLUDES AND DEFINES                                                       */
+/*                                                                            */
+/******************************************************************************/
+
+#include "guarpfe.h"
+
+EXEC SQL INCLUDE guaorac.c;
+
+/* SZRROLL.RPT                                                         */
+/*                                                                     */
+/* Academic History Grade Roll report program                          */
+/*                                                                     */
+/*   Audit Trail: 1.1                                                  */
+/*                                                     INIT    DATE    */
+/* --------------------------------------------------  ----  --------  */
+/* 1. This process was created as an enhancement to                    */
+/*    provide an alternative to automatic rolling                      */
+/*    of grades to academic history via the SFASLST                    */
+/*    Form.  Processing is controlled by a collector    SP   07/01/88  */
+/*    table (SZRROLL) whose rows are created by the                    */
+/*    SFASLST Form.  After the academic history                        */
+/*    tables have been updated, the collector table                    */
+/*    row that was processed is deleted.                               */
+/*                                                                     */
+/* --------------------------------------------------  ----  --------  */
+/*   Audit Trail: 1.2                                                  */
+/*                                                                     */
+/* 1. Fixed problem number 88-6209                      SP   08/03/88  */
+/*    Allow all parms to be entered interactively                      */
+/*                                                                     */
+/* 2. Phase 2 of problem number 88-6209                 SP   09/06/88  */
+/*    Removed dummy ASKs; changed table owner of                       */
+/*    all tables beginning with 'G' to General                         */
+/*    instead of Saturn; added capability of                           */
+/*    processing multiple values for a parameter                       */
+/*    when job is run interactively - using SPRCOLR.                   */
+/*                                                                     */
+/* 3. Removed processing of SZRROLL table; now the      SP   09/27/88  */
+/*    SFRSTCR table is read and checked for null                       */
+/*    grade date and non-null grade code.                              */
+/*                                                                     */
+/*    Added two new parameters: Report Mode which                      */
+/*    can be either Audit or Update, and Print                         */
+/*    Selection which can be either All or Errors                      */
+/*    only.                                                            */
+/*                                                                     */
+/* AUDIT TRAIL: 1.3                                                    */
+/* 1. Changed section seq number to A3 instead of 999.  RM  01/06/89   */
+/* 2. Changed SELROLL macro to include section in the                  */
+/*    selection and to use the section ptrm code instead               */
+/*    of the stcr ptrm code in the where clause.                       */
+/*    Also deleted selsect and any refer to it.         RM  01/06/89   */
+/* 3. Added table ends to TBODY.                        RM  01/06/89   */
+/*                                                                     */
+/* AUDIT TRAIL: 1.5                                                    */
+/* 1. Corrected code for rolling section titles to                     */
+/*    history.  Modified code for efficiency.           BR  05/25/89   */
+/*                                                                     */
+/* 2. Added code for TCP-XXXX.  Courses are now applied                */
+/*    to degree when rolled.  If degree does not exist                 */
+/*    degree will be created.                           BR  06/12/89   */
+/*                                                                     */
+/* 3. The registration level code will now be used in                  */
+/*    in roll records, not the student level.           BR  06/27/89   */
+/*                                                                     */
+/* AUDIT TRAIL: 1.6                                                    */
+/* 1. Corrected code to write revised records to the                   */
+/*    grade mailer collector file (SHRGCOL) and update                 */
+/*    the term header record (SHRTTRM) when                            */
+/*    appropriate.                                      BR  12/04/89   */
+/*                                                                     */
+/* AUDIT TRAIL: 1.7                                                    */
+/* 1. Added student campus to insert of SHRDGMR.        BR  07/02/90   */
+/* 2. Fixed problem report 89-6389.                                    */
+/*    Made the print errors only function to work.      AP  07/07/90   */
+/*                                                                     */
+/* 3. Rolled the course section attribute along with                   */
+/*    the section.                                      BG  08/06/90   */
+/*                                                                     */
+/* 4. Added primary indicator to roll of instructors                   */
+/*    in INSERT_INST macro.                             BR  08/13/90   */
+/*                                                                     */
+/* 5. Added the SELLGPA, INSERT_LGPA and UPD_LGPA                      */
+/*    macros to create or update the SHRLGPA record                    */
+/*    with 'N' as GPA calculation indicator.            BG   08/22/90  */
+/*                                                                     */
+/* AUDIT TRAIL: 1.8                                                    */
+/* 1. Modified macros SELROLL to select, and INSERT_TCKN               */
+/*    to plug in ptrm start/end dates and contact hours                */
+/*    for courses defined as ceu sections.              TM   11/29/90  */
+/*                                                                     */
+/* AUDIT TRAIL: 1.9                                                    */
+/* 1.  Modified to pass SSBSECT_SCHD_CODE to SHRTCKN.   AP   02/11/91  */
+/* 2.  Modified insert of SHRGCOL to put 'O' in request                */
+/*     type for original grade mailer requested.        AP   03/04/91  */
+/* 3.  Replace SSRINST table by SIRASGN.                BG   03/15/91  */
+/* 4. Modified for new job submission standards                        */
+/*                                                                     */
+/* AUDIT TRAIL: 1.10                                                   */
+/* 1. Added code the SELGPAC and INSERT_GPAC to insert                 */
+/*    campus records by term if needed.                 TD   08/26/91  */
+/* 2. Added the SELGPAL, INSERT_GPAL and UPD_GPAL                      */
+/*    macros to create or update the SHRGPAL record                    */
+/*    with 'N' as GPA calculation indicator.            TD   08/26/91  */
+/* 3. Added check for catalog overrides on college                     */
+/*    code, department code, division code.             PL   08/29/91  */
+/* 4. Increased size of regseq field.                   AR   09/06/91  */
+/* 5. Moved delete logic from retrieve parm section     TD   10/08/91  */
+/*    because parameter info needed to drive main                      */
+/*    select.  Placed delete logic at end of rpt.                      */
+/*                                                                     */
+/* AUDIT TRAIL: 1.11                                                   */
+/* 1. Fixed problem 90-6568.  Corrected printing of multiple           */
+/*    blank pages during processing.                    BR   02/12/92  */
+/* 2. Added insert to SHRCHRT to create cohort records  PL   07/08/92  */
+/*    from general student cohorts when the term header                */
+/*    record is created.                                               */
+/* 3. Added new SHRDGMR fields to insert.               PL   07/08/92  */
+/* 4. Removed check to prevent instructor roll when     PL   10/16/92  */
+/*    only errors requested to be printed (CSR 92-6322).               */
+/*                                                                     */
+/* AUDIT TRAIL: 2.0                                                    */
+/* 1. 93-6082. Prevent fatal oracle error if grade to   RL   07/26/93  */
+/*    be rolled already exists in the SHRTCKN table.                   */
+/* 2. 93-6084. Ensure all primary curriculum fields are          */
+/*    updated on the SHRDGMR record, including minors and              */
+/*    concentrations.                                   RL   09/07/93  */
+/* 3. Internal CSR. Modify INSERT_DGMR to roll only primary            */
+/*    curriculum date fields in SELROLL DECODE statements        */
+/*    to prevent compile errors when using full sqlcheck.  RL 07/26/94 */
+/*                                                                     */
+/* AUDIT TRAIL: 2.1                                                    */
+/* 1. Removed table owners.                                RL 10/10/94 */
+/*                                                                     */
+/* AUDIT TRAIL: 2.X Supplemental                               JWM  12/12/94  */
+/* 1. Program modified by cfix.c to remedy mostly Pro*C related problems:     */
+/*    split SQL concatenations joined, colons added to FETCH targets,         */
+/*    file extensions added to SQL INCLUDEs, 'static' modifier removed from   */
+/*    indicator variables, new logic to hadle CLOSE_CURSOR was added to SQL   */
+/*    function wrappers, and object owner references were removed as part of  */
+/*    BANNER2.1.  (Not all changes necessarily apply.)                        */
+/*                                                                           */
+/* AUDIT TRAIL: 2.1.5                                                        */
+/* 1. Modify Report Control Information header to include        BW 01/19/95*/
+/*    Release Number                                             BW 01/19/95*/
+/* 2. Modify SYSDATE or sysdate to include century in the        BW 01/19/95*/
+/*    heading of the report                                      BW 01/19/95*/
+/* 3. Added variables to hold data from the new curriculum      MKH 11/01/94*/
+/*    columns in SGBSTDN and SHRDGMR.                                       */
+/* 4. Modified SELROLL and SELDGMR to include the new           MKH 11/01/95*/
+/*    curriculum columns in SGBSTDN and SHRDGMR resectively.                */
+/* 5. Modified the WHERE clause of SELDGMR to use program       MKH 11/01/95*/
+/*    rather than major as a criteria.                                      */
+/* 6. Modified the insert and update of SHRDGMR records, and    MKH 11/01/95*/
+/*    the comparison of SGBSTDN data with SHRDGMR data to                   */
+/*    include the new curriculum columns.                                   */
+/* 7. Added new functionality to retrieve, compare, insert,     MKH 11/01/95*/
+/*    and update records in keeping with the new primary and                */
+/*    secondary curriculum format.                                          */
+/* 8. Added campus code to comparison and update of SHRDGMR     MKH 11/01/95*/
+/*    records.                                                              */
+/*                                                                          */
+/* AUDIT TRAIL: 2.1.8                                                       */
+/* 1. Expand course number to 5 characters.                     AK 11/21/95 */
+/*                                                                          */
+/* AUDIT TRAIL: 2.1.20                                                      */
+/* 1. Modified INSERT_CHRT to include century in the format     CE 08/16/96 */
+/*    for sysdate and sgrchrt_activity_date.                                */
+/* 2. Updated release number in FOOT.                           CE 08/21/96 */
+/* 3. Course Attribute enhancement.                            AMP 02/19/97 */
+/*       Added new procedures get_and_ins_attc to store course              */
+/*       attributes once, at the CRN level and lock_shrattc for             */
+/*       locking new table shrattc.                                         */
+/* 4. Removed references for storing course attributes for     AMP 02/19/97 */
+/*       each PIDM.  This included removing procedure                       */
+/*       insert_attr and modifying procedure lock_tables.                   */
+/* 5. Updated release number in FOOT.                          AMP 02/19/97 */
+/* 6. Defect #5897. Corrected problem with wrong century       CE  04/29/97 */
+/*    being inserted with dates.                                            */
+/*       a. Added date format mask to dates being inserted in               */
+/*          INSERT_DGMR, INSERT_DGMR1, and INSERT_DGMR2.                    */
+/*       b. Added to_char function and format mask to grad date             */
+/*          in SELROLL and format mask to ptrm_start_date and               */
+/*          and ptrm_end_date.                                              */
+/*       c. In INSERT_TCKN, added to_date function and format mask          */
+/*          to TCKN_PTRM_START and TCKN_PTRM_END.                           */
+/*                                                                          */
+/* AUDIT TRAIL: 3.0                                                         */
+/* 1. Defect #6902. Removed date format mask from sysdate in   CE  07/22/97 */
+/*    INSERT_CHRT.                                                          */
+/*                                                                          */
+/* AUDIT TRAIL: 3.0.0.1                                                     */
+/* 1. Defect #8319 - "ptrm_start_date and ptrm_end_date don't  BTD 12/10/97 */
+/*    get rolled into history for institional course work." I changed query */
+/*    selroll so that ptrm_start_date and ptrm_end_date are selected no     */
+/*    matter what scbcrse_ceu_ind is.                                       */
+/*                                                                          */
+/* AUDIT TRAIL: 3.1                                                         */
+/* 1. Defect #9073. modified  insert_ttrm macro, by adding two more nulls at*/
+/*      the end.                                                RS  05/04/98*/
+/*                                                                          */
+/* AUDIT TRAIL: 4.0                                                         */
+/* 1. Ptrm, ask_ptrm, and sect_ptrm expanded to 4 characters.   AT 02/15/99 */
+/*                                                                          */
+/* AUDIT TRAIL: 4.1.1                                                       */
+/* AUDIT TRAIL: 4.2                                                         */
+/* 1. All grade roll functionality was placed into a new        JC 07/06/99 */
+/*    shared package, SHKROLS.  The package essentially replaces            */
+/*    functions SELROLL and TBODY, and all their called functions.          */
+/*    Report information is stored by the package in a new table,           */
+/*    SOTPRNT.  SZRROLL selects from this table to write the report.        */
+/*    Forms SFAALST and SFASLST also use package SHKROLS.                   */
+/* AUDIT TRAIL: 4.3                                                         */
+/* 1. Uncommented following lines of code:                      JC 07/06/99 */
+/*    delete_colr                                                           */
+/*    delete_parms                                                          */
+/*    delete_prnt                                                           */
+/*                                                                          */
+/* AUDIT TRAIL: 5.5                 */
+/* 1. GMW 04/22/2002 Defect 75190             */
+/*    Problem: Prints all courses, even when parameter 06 is E for errors   */
+/*             only.                              */
+/*    Solution:Select where sotprnt_rectype LIKE '%ERR% when parameter 06   */
+/*             is 'E' in function get_sotprnt.                              */
+/*                                                                          */
+/* 2. VPD Initiative - eliminate implicit inserts             CLF  06/20/02 */
+/*                                                                          */
+/* AUDIT TRAIL: 6.0                 */
+/* 1. OLR Enhancements                                        JC   01/06/03 */
+/*    1) Added following parameters:                                        */
+/*       - START_FROM_DATE                        */
+/*       - START_TO_DATE                          */
+/*       - GRADE_TERM                             */
+/*       - ROLL_LONG_SECTION_TITLE                */
+/*    2) Added following functions:                                         */
+/*       - readfromdate                           */
+/*       - readtodate                             */
+/*       - readgradeterm                          */
+/*       - readrolltitle                          */
+/*       - checkdates                             */
+/*       - checkptrm                              */
+/*       - checkallterm                           */
+/*       - get_term_desc                          */
+/*       - valid_term_code                        */
+/* 2. GMW 02/11/2003 Defect 42404                                           */
+/* Problem: Errors with Part of term > 1 character.                         */
+/* Solution: Modify layout for table 3.                                     */
+/*                                                                          */
+/* AUDIT TRAIL: 6.1.1.1                                                     */
+/* 1. Defect 82235                                            JC   12/10/03 */
+/*    Problem: When printing only ERROR report, course line does not print. */
+/*    Fix:     Backed out changes that were applied for Defect 75190.     . */
+/*             Modified function print_course.                              */
+/*             Created function hold_course_info.                           */
+/*             Created fields hold_course_ind, hold_crn, hold_ptrm,         */
+/*                hold_subject, hold_course, hold_ctitle.                   */
+/*                                                                          */
+/* AUDIT TRAIL: 7.0                                                         */
+/* 1. Migrated 6.1.1.1 changes to 7.0                         JC   02/23/04 */
+/* 2. APIs                         DRA 20OCT2004                            */
+/*   Replace commits with call to gb_common.p_commit().                     */
+/*                                                                          */
+/* AUDIT TRAIL: 7.3                                                         */
+/* 1. Defect 87599                                            JKP  02/11/06 */
+/*    Problem: Token "YY" exceeds containing column width (1) when          */
+/*             printing campus.  Also headers do not print when audit.      */
+/*    Fix: Modified tables 3 and 4 definitions to allow for 3 character     */
+/*         campus values.  Also modified print_course and print_student     */
+/*         to allow headers to print when in audit mode.                    */
+/* 2. Defect 106084                                           JKP  02/13/06 */
+/*    Problem: SZRROLL is printing the text message, "Rolled to Academic    */
+/*       History" a redundant time for each student.  The unwanted second   */
+/*       appearance of that same message appears on its own line directly   */
+/*       after the line showing the first occurence of that text message.   */
+/*    Fix: Modified print_student to also check for null in pseq2 and skip  */
+/*       second if no value.                                                */
+/*                                                                          */
+/* 3. Defect 105664  MAH  3/5/06                                            */
+/*  Problem:  API errors do not include enough information,  and cause      */
+/*   entire roll to abort.                                                  */
+/*  Solution: Add new rectype APIERR to sotprnt. Shkrols collects the       */
+/*  api errors in the new sotprnt_err_msg field.  Add new procedure         */
+/*  print_api_errs to print the sotprnt.                                    */
+/* 4. Audit mode changes                                                    */
+/*   Running the report in audit mode still commits the data                */
+/*   rollback after the shkrols is called.  Update shkrols to look at the   */
+/*   audit mode and to not commit if it is run in audit, not update         */
+/*                                                                          */
+/*                                                                          */
+/* AUDIT TRAIL: 7.3.0.1                                                    */
+/*  1.  Defect 1-MXNQE  MAH  7/8/06                                         */
+/*  plateform issue over t_define for new table 5, it was missing the NULL */
+/*  pointer which caused overload issues                                   */
+/* AUDIT TRAIL : 8.0 (I18N)
+   Description: Internationalization Unicode Conversion */
+/*                                                                          */
+/* AUDIT TRAIL: 8.5.7                                                       */
+/* 1. Banner Recruiter Integration                        JC 03/11/2013     */
+/*    Because this process is no longer the only one using SOTPRNT to store */
+/*    messages to be printed (new process SRRRICC also uses it), every      */
+/*    query should use SOTPRNT_JOB, which contains the process name.        */
+/*    Modified functions 'get_sotprnt' and 'delete_prnt', added the         */
+/*    following condition to the WHERE clause:                              */
+/*      AND sotprnt_job = 'SZRROLL'                                         */
+/*                                                                          */
+/****************************************************************************/
+/*                                                                          */
+/*  AUDIT TRAIL: 8.7.0 [UTM:002.1.0]                        INI    DATE     */
+/*  ------------------------------------------------------- --- ----------- */
+/*  1. Initial creation of the szrroll process.             MKU 22-DEC-2015 */
+/*  ------------------------------------------------------- --- ----------- */
+
+/***********************************************************************/
+/* AUDIT TRAIL END                                                     */
+/* ------------------------------------------------------------------- */
+/*                                                                     */
+/* Parameters: RPTNAME - directory & filename of SQL*Report program    */
+/*             TERM - Effective term of report                         */
+/*             PTRM - PTRM or multiple PTRMS to be selected; % = All   */
+/*             CRN  - CRN or multiple CRNs to be selected; % = All     */
+/*             USER ID - User Id to be put onto Academic History rows  */
+/*             REPORT MODE - Audit(A) or Update(U)                     */
+/*             PRINT SELECTION - Print All(A) or Print Errors Only(E)  */
+/*                                                                     */
+/* Tables:                                                             */
+/*             GUBINST Institution Table                               */
+/*             GJBJOBS Jobs Table                                      */
+/*             SCBCRSE Course General Info Table                       */
+/*             SFRSTCR Student Course Registration Table               */
+/*             SGBSTDN Student Base Table                              */
+/*             SHRATTC History Course Section Attributes Table         */
+/*             SHRDGMR Degrees Sought/Awarded Table                    */
+/*             SHRGCOL Grade Mailer Collector Table                    */
+/*             SHRGRDO Valid Grading Modes Maint Table                 */
+/*             SHRGRDS Grading Mode Substitution Table                 */
+/*             SHRINST Acad Hist Instructor Table                      */
+/*             SHRTCKD Inst Course Term Degree Applied Table           */
+/*             SHRTCKG Institutional Courses Grade Table               */
+/*             SHRTCKL Inst Course Maint Level Applied Table           */
+/*             SHRTCKN Inst Course Term Maint Table                    */
+/*             SHRLGPA Level GPA Table                                 */
+/*             SHRTGPA Term GPA Table                                  */
+/*             SHRTTRM Inst Course Maint Term Header Table             */
+/*             SSBSECT Section General Information Table               */
+/*             SSBOVRR Schedule Override Table                         */
+/*             SSRATTR Section Attribute Table                         */
+/* Views:                                                              */
+/*                                                                     */
+/* Parameter variables                                                 */
+/*                                                                     */
+/* Rename parameter fields used by the report to names appropriate for */
+/* the application. All eight parameters must remain in the program.   */
+/* Supply all unused parameters with nulls.                            */
+
+EXEC SQL BEGIN DECLARE SECTION;
+  static TMCHAR   rptname[8]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   footer_ind[2]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   dummy_var[2]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   end_run[2]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR  term_desc[31]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   print_term[7]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   valid_term[7]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   term[7]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   ptrm[4]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   crn[6]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR  current_user[31]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   report_mode[2]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   print_sel[2]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   hold_course_ind[2]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   hold_term[7]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   hold_crn[6]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   hold_ptrm[4]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   hold_subject[5]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   hold_course[6]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR  hold_ctitle[31]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   grade_term[7]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   roll_title[2]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR  start_from_date[12]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR  start_to_date[12]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   ask_term[7]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   ask_ptrm_var[4]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   ask_crn_var[6]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR  ask_current_user[31]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   ask_report_mode[2]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   ask_print_sel[2]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   ask_grade_term[7]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   ask_roll_title[2]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR  ask_from_date[12]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR  ask_to_date[12]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR  ask_level[3]={0};
+  static TMCHAR  ask_campus[4]={0};
+  static TMCHAR  valid_campus[4]={0};
+  static TMCHAR  level[3]={0};
+  static TMCHAR  valid_level[3]={0};
+  static TMCHAR  campus[4]={0};
+
+/* *** Job submission alteration */
+
+  static BANNUMSTR(ask_line_count_var)={0}/*TMCI18N CHANGED FROM ""*/;
+  static BANNUMSTR(ask_one_up_no)={0}/*TMCI18N CHANGED FROM ""*/;
+  static BANNUMSTR(rpt_one_up_no)={0}/*TMCI18N CHANGED FROM ""*/;
+
+/* ***                */
+/* Standard variables */
+
+  static BANNUMSTR(count)={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR  date[12]={0}/*TMCI18N CHANGED FROM ""*/;
+  static BANNUMSTR(five)={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR  institution[31]={0}/*TMCI18N CHANGED FROM ""*/;
+  static BANNUMSTR(linelimit)={0}/*TMCI18N CHANGED FROM ""*/;
+  static BANNUMSTR(lineno)={0}/*TMCI18N CHANGED FROM ""*/;
+  static BANNUMSTR(one)={0}/*TMCI18N CHANGED FROM ""*/;
+  static BANNUMSTR(pageno)={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   time_var[12]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR  title_var[31]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR  sessionid[31]={0}/*TMCI18N CHANGED FROM ""*/;
+
+/* *** Job submission alteration */
+
+  static BANNUMSTR(parm_no)={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   valid_ind[2]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   rpt_optional_ind[2]={0}/*TMCI18N CHANGED FROM ""*/;
+
+/* ***                                 */
+/* Application variables (alpha order) */
+
+  static TMCHAR   crn_ind[2]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR  parm_desc[31]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   parm_number[3]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR  parm_value[11]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   ptrm_ind[2]={0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR   level_ind[2]={0};
+
+
+/* Report print variables */
+
+   static TMCHAR  sotprnt_rectype[7];
+   static TMCHAR sotprnt_id[10];
+   static TMCHAR sotprnt_name[31];
+   static TMCHAR  sotprnt_crn[6];
+   static TMCHAR  sotprnt_term[7];
+   static TMCHAR  sotprnt_ptrm[4];
+   static TMCHAR  sotprnt_subject[5];
+   static TMCHAR  sotprnt_course[6];
+   static TMCHAR sotprnt_ctitle[31];
+   static TMCHAR  sotprnt_levl_1[3];
+   static TMCHAR  sotprnt_degc_1[7];
+   static TMCHAR  sotprnt_coll_1[3];
+   static TMCHAR  sotprnt_majr_1[5];
+   static TMCHAR  sotprnt_camp[4];
+   static BANNUMSTR(sotprnt_pseq1);
+   static TMCHAR  sotprnt_levl_2[3];
+   static TMCHAR  sotprnt_degc_2[7];
+   static TMCHAR  sotprnt_coll_2[3];
+   static TMCHAR  sotprnt_majr_2[5];
+   static BANNUMSTR(sotprnt_pseq2);
+   static TMCHAR  sotprnt_deg1_updated[2];
+   static TMCHAR  sotprnt_deg1_created[2];
+   static TMCHAR  sotprnt_deg2_updated[2];
+   static TMCHAR  sotprnt_deg2_created[2];
+   static BANNUMSTR(sotprnt_count_processed);
+   static TMCHAR  sotprnt_err_msg[121];
+
+/* *** Gdatevalid variables */
+   static TMCHAR  errflag[2]={0}/*TMCI18N CHANGED FROM ""*/;
+   static TMCHAR errmsg[61]={0}/*TMCI18N CHANGED FROM ""*/;
+
+  /* Shared indicator variables for SELECTs */
+
+         short   Ind_01;
+         short   Ind_02;
+         short   Ind_03;
+         short   Ind_04;
+         short   Ind_05;
+         short   Ind_06;
+         short   Ind_07;
+         short   Ind_08;
+         short   Ind_09;
+         short   Ind_10;
+         short   Ind_11;
+         short   Ind_12;
+         short   Ind_13;
+         short   Ind_14;
+         short   Ind_15;
+         short   Ind_16;
+         short   Ind_17;
+         short   Ind_18;
+         short   Ind_19;
+         short   Ind_20;
+         short   Ind_21;
+         short   Ind_22;
+         short   Ind_23;
+         short   Ind_24;
+         short   Ind_25;
+         short   Ind_26;
+         short   Ind_27;
+         short   Ind_28;
+         short   Ind_29;
+         short   Ind_30;
+         short   Ind_36;
+
+EXEC SQL END DECLARE SECTION;
+
+/* Local prototypes */
+
+static void readfromdate(void);
+static void readtodate(void);
+static void readgradeterm(void);
+static void readrolltitle(void);
+static void get_term_desc(void);
+static int checkdates(void);
+static int checkptrm(void);
+static int checkallterm(void);
+static int valid_term_code(void);
+static int validate_one_up_no(int mode);
+static int sel_optional_ind(int mode);
+static int read_line_count(int mode);
+static int readterm(int mode);
+static int readcrn(int mode);
+static int readuser(int mode);
+static int readmode(int mode);
+static int readprint(int mode);
+static int readparms(int mode);
+static int selmacro(int mode);
+static int seldate(int mode);
+static int readcampus(int mode);
+static int readlevel(int mode);
+
+
+/* 5.5 Defect 75190
+static int sel_collector_crn(int mode);*/
+static int selinst(int mode);
+static int seltitle(int mode);
+static int readcolr(int mode);
+static int retrieve_parms(void);
+static void delete_parms(void);
+static void delete_prnt(void);
+static void delete_colr(void);
+static void lockcolr(void);
+static void write_report(void);
+static void hold_course_info(void);
+static void print_course(void);
+static void print_student(void);
+static void print_hist_err(void);
+static void print_api_err(void);
+static void print_grade_err(void);
+static void print_footer(void);
+static void header(void);
+static void printparm(void);
+static void print_collector_parm(void);
+static void insertptrm(void);
+static void insert_colr_ptrm(void);
+static void insertcrn(void);
+static void insert_colr_crn(void);
+static void getsession(void);
+static void insert_colr_level(void);
+static int checklevel(void);
+static void insertlevl(void);
+static void print_coreq_diff_grade(void);
+static void print_coreq_grade_miss(void);
+
+/* ************************************************************************** */
+
+int main(int argc,TMCHAR *argv[])
+{
+  /* switch to turn on the sql_trace option */
+
+  extern short sqltrace_flag;
+
+  rptopen(user_pass,argc,argv);
+
+  login();
+
+  if ( sqltrace_flag )
+    EXEC SQL ALTER SESSION SET SQL_TRACE TRUE;
+
+/* Initialize variables */
+
+  tmstrcpy(count,_TMC("0"));
+  tmstrcpy(one,_TMC("1"));
+  tmstrcpy(five,_TMC("5"));
+  tmstrcpy(linelimit,_TMC("55"));
+  tmstrcpy(pageno,_TMC("0"));
+  tmstrcpy(footer_ind,_TMC("N"));
+  tmstrcpy(hold_course_ind,_TMC("N"));
+  sysdate(time_var,ORA_NLS_TIME_FORMAT);
+  tmstrcpy(rptname,_TMC("SZRROLL"));
+
+  getsession();
+
+/* Table definitions                            */
+/*                                              */
+/* Table 1 page definition                      */
+/* Table 2 1-24    Date and time/Term           */
+/*         51-81   Institution/Title            */
+/*         123-132 Page/SQL*Report program name */
+/* Table 3 1-5     CRN                          */
+/*         10-10   PTRM                         */
+/*         15-18   Subject                      */
+/*         20-23   Course Number                */
+/*         26-55   Course Title                 */
+/* Table 4 1-9     ID Number                    */
+/*         20-49   Name                         */
+/*         60-99   Roll Message                 */
+/*         105-111 Error Indicator              */
+
+  table(T_DEFINE,1,1,132,NULL);
+  table(T_DEFINE,2,1,24,51,81,123,132,NULL);
+
+/* #DT 3 1 5 10 10 15 18 20 23 26 55 # */
+/* #DT 4 1 9 20 49 60 99 105 111 #     */
+
+/* 6.0 Define 42404 */
+/*  table(T_DEFINE,3,1,5,10,10,15,18,20,24,26,55,92,97,99,102,104,107,109,112, */
+/*                   114,116,118,118,120,132,NULL);*/
+
+  /* Defect 87599: Change last two columns for tables 3 and 4 from 118,118 */
+  /*               to 118,120 and from 120,132 to 122,132                  */
+ /*  table(T_DEFINE,3,1,5,10,12,15,18,20,24,26,55,92,97,99,102,104,107,109,112,
+                   114,116,118,120,122,132,NULL);
+  table(T_DEFINE,4,1,9,11,40,42,77,79,89,91,98,100,102,104,107,109,112,114,116,
+                   118,120,122,132,NULL); */
+  /* 7.3 change layout to include the pgm */
+  table(T_DEFINE,3,1,5, 10,12, 15,18, 20,24, 26,55, 72,78, 80, 84, 86,90, 92,96,  98,101, 103,106,
+                  108, 120, 121,132, NULL);
+
+  table(T_DEFINE,4,1,9, 11,40, 42,70, 72,78, 80, 84, 86,90, 92,96,  98,101, 103,106,
+                  108, 120, 121,132,NULL);
+  table(T_DEFINE,5,5,132,NULL);
+  table(T_BEGIN,1);
+
+/* *** Job submission alteration */
+/*                               */
+/* Add Standard Ask              */
+
+  *start_from_date='\0';
+  *start_to_date='\0';
+  tmstrcpy(ptrm_ind,_TMC("N"));
+  input(ask_one_up_no,TM_NLS_Get("X","RUN SEQUENCE NUMBER: "),26,NUM);
+  if ( !*ask_one_up_no ) goto ask_parms;
+  tmstrcpy(rpt_one_up_no,ask_one_up_no);
+  tmstrcpy(valid_ind,_TMC("N"));
+  validate_one_up_no(FIRST_ROW);
+  if ( compare(valid_ind,_TMC("Y"),EQS) ) goto retrieve_parms_lbl;
+  goto no_parms;
+  retrieve_parms_lbl:
+    if ( !retrieve_parms() )
+      goto end_report;
+/*****API Replaced EXEC SQL COMMIT; POSTORA;                            *****/
+
+    EXEC SQL EXECUTE BEGIN gb_common.p_commit(NULL); END; END-EXEC; POSTORA; /*BIEN*/
+    goto end_parms;
+  ask_parms:
+
+/* ***                                  */
+/* Ask for parameters                   */
+/* Rename appropriate parameter fields. */
+
+  get_term:
+    input(ask_term,TM_NLS_Get("X","TERM: "),6,ALPHA);
+    if ( !*ask_term ) goto opt_term;
+    tmstrcpy(valid_term,ask_term);
+    if ( compare(valid_term,_TMC("%"),EQS) )
+      {
+        tmstrcpy(term,valid_term);
+        goto nextparma;
+      }
+    if ( !valid_term_code() )
+       {
+        tmprintf(&tmBundle, TM_NLS_Get("X","Invalid term code. "));
+        goto get_term;
+       }
+    tmstrcpy(term,ask_term);
+    goto nextparma;
+  opt_term:
+    tmstrcpy(parm_no,_TMC("01"));
+    sel_optional_ind(FIRST_ROW);
+    if ( compare(rpt_optional_ind,_TMC("O"),EQS) ) goto nextparma;
+    goto missing_parms;
+  nextparma:
+    input(ask_from_date,TM_NLS_Get("X","START RANGE FROM_DATE: "),11,ALPHA);
+    if ( !*ask_from_date )
+      if ( !checkallterm() )
+         goto missing_parms;
+    if ( !*ask_from_date )
+      goto opt_from_date;
+    tmstrcpy(start_from_date,ask_from_date);
+    EXEC SQL EXECUTE
+     BEGIN
+       gdatevalid(:start_from_date,:cenpivot,:errflag,:errmsg,'');
+     END;
+    END-EXEC;
+     if (tmstrcmp(errflag,_TMC("")) != 0)
+       {
+         tmprintf(&tmBundle, TM_NLS_Get("X","{0}\n"),errmsg);
+         goto nextparma;
+       }
+    goto nextparmb;
+  opt_from_date:
+    tmstrcpy(parm_no,_TMC("02"));
+    sel_optional_ind(FIRST_ROW);
+    if ( compare(rpt_optional_ind,_TMC("O"),EQS) ) goto nextparmc;
+    goto missing_parms;
+  nextparmb:
+    input(ask_to_date,TM_NLS_Get("X","START RANGE TO_DATE: "),11,ALPHA);
+    if ( !*ask_to_date ) goto date_continue;
+    tmstrcpy(start_to_date,ask_to_date);
+    EXEC SQL EXECUTE
+     BEGIN
+       gdatevalid(:start_to_date,:cenpivot,:errflag,:errmsg,'');
+     END;
+    END-EXEC;
+     if (tmstrcmp(errflag,_TMC("")) != 0)
+       {
+         tmprintf(&tmBundle, TM_NLS_Get("X","{0}\n"),errmsg);
+         goto nextparmb;
+       }
+  date_continue:
+    if ( !checkdates() )
+      goto missing_parms;
+  nextparmc:
+    tmstrcpy(ptrm_ind,_TMC("N"));
+  ask_ptrm:
+    input(ask_ptrm_var,_TMC("PTRM({0,% f}or ALL): "),4,ALPHA);
+    if ( !*ask_ptrm_var ) goto opt_ptrm;
+    tmstrcpy(ptrm_ind,_TMC("Y"));
+    tmstrcpy(ptrm,ask_ptrm_var);
+    insert_colr_ptrm();
+    if ( compare(ptrm,_TMC("%"),EQS) ) goto nextparmd;
+    if ( !checkptrm() )
+      goto missing_parms;
+    goto ask_ptrm;
+  opt_ptrm:
+    if ( compare(ptrm_ind,_TMC("Y"),EQS) ) goto nextparmd;
+    tmstrcpy(parm_no,_TMC("04"));
+    sel_optional_ind(FIRST_ROW);
+    if ( compare(rpt_optional_ind,_TMC("O"),EQS) ) goto nextparmd;
+    goto missing_parms;
+  nextparmd:
+    tmstrcpy(crn_ind,_TMC("N"));
+  ask_crn:
+    input(ask_crn_var,_TMC("CRN({0,% f}or ALL): "),5,ALPHA);
+    if ( !*ask_crn_var ) goto opt_crn;
+    tmstrcpy(crn_ind,_TMC("Y"));
+    tmstrcpy(crn,ask_crn_var);
+    insert_colr_crn();
+    if ( compare(crn,_TMC("%"),EQS) ) goto nextparme;
+    goto ask_crn;
+  opt_crn:
+    if ( compare(crn_ind,_TMC("Y"),EQS) ) goto nextparme;
+    tmstrcpy(parm_no,_TMC("05"));
+    sel_optional_ind(FIRST_ROW);
+    if ( compare(rpt_optional_ind,_TMC("O"),EQS) ) goto nextparme;
+    goto missing_parms;
+  nextparme:
+    input(ask_current_user,TM_NLS_Get("X","USER ID: "),30,ALPHA);
+    if ( !*ask_current_user ) goto opt_user;
+    tmstrcpy(current_user,ask_current_user);
+    goto nextparmf;
+  opt_user:
+    tmstrcpy(parm_no,_TMC("06"));
+    sel_optional_ind(FIRST_ROW);
+    if ( compare(rpt_optional_ind,_TMC("O"),EQS) ) goto nextparmf;
+    goto missing_parms;
+  nextparmf:
+    input(ask_report_mode,TM_NLS_Get("X","REPORT MODE(A=AUDIT,U=UPDATE): "),1,ALPHA);
+    if ( !*ask_report_mode ) goto opt_mode;
+    if ( !compare(ask_report_mode,_TMC("A"),EQS) &&
+                                  !compare(ask_report_mode,_TMC("U"),EQS) )
+       {
+        tmprintf(&tmBundle, TM_NLS_Get("X","Invalid value. "));
+        goto nextparmf;
+       }
+    tmstrcpy(report_mode,ask_report_mode);
+    goto nextparmg;
+  opt_mode:
+    tmstrcpy(parm_no,_TMC("07"));
+    sel_optional_ind(FIRST_ROW);
+    if ( compare(rpt_optional_ind,_TMC("O"),EQS) ) goto nextparmg;
+    goto missing_parms;
+  nextparmg:
+    input(ask_print_sel,TM_NLS_Get("X","PRINT SELECTION(A=ALL,E=ERRORS): "),1,ALPHA);
+    if ( !*ask_print_sel ) goto opt_print;
+    if ( !compare(ask_print_sel,_TMC("A"),EQS) &&
+                                  !compare(ask_print_sel,_TMC("E"),EQS) )
+       {
+        tmprintf(&tmBundle, TM_NLS_Get("X","Invalid value. "));
+        goto nextparmg;
+       }
+    tmstrcpy(print_sel,ask_print_sel);
+    goto nextparmh;
+  opt_print:
+    tmstrcpy(parm_no,_TMC("08"));
+    sel_optional_ind(FIRST_ROW);
+    if ( compare(rpt_optional_ind,_TMC("O"),EQS) ) goto nextparmh;
+    goto missing_parms;
+  nextparmh:
+    input(ask_grade_term,TM_NLS_Get("X","GRADE TERM: "),6,ALPHA);
+    if ( !*ask_grade_term) goto opt_grade_term;
+    tmstrcpy(valid_term,ask_grade_term);
+    if ( !valid_term_code() )
+       {
+        tmprintf(&tmBundle, TM_NLS_Get("X","Invalid term code. "));
+        goto nextparmh;
+       }
+    tmstrcpy(grade_term,ask_grade_term);
+    goto nextparmi;
+  opt_grade_term:
+    tmstrcpy(parm_no,_TMC("09"));
+    sel_optional_ind(FIRST_ROW);
+    if ( compare(rpt_optional_ind,_TMC("O"),EQS) ) goto nextparmi;
+    goto missing_parms;
+  nextparmi:
+    input(ask_roll_title,TM_NLS_Get("X","ROLL LONG SECTION TITLE (Y,[N]): "),1,ALPHA);
+    if ( !*ask_roll_title)
+       tmstrcpy(ask_roll_title,_TMC("N"));
+    if ( !compare(ask_roll_title,_TMC("Y"),EQS) &&
+                                  !compare(ask_roll_title,_TMC("N"),EQS) )
+       {
+        tmprintf(&tmBundle, TM_NLS_Get("X","Invalid value. "));
+        goto nextparmi;
+       }
+    tmstrcpy(roll_title,ask_roll_title);
+    goto nextparlv;
+  /* opt_roll_title: */
+    tmstrcpy(parm_no,_TMC("10"));
+    sel_optional_ind(FIRST_ROW);
+    if ( compare(rpt_optional_ind,_TMC("O"),EQS) ) goto nextparlv;
+    goto missing_parms;
+  nextparlv:
+     tmstrcpy(level_ind,_TMC("N"));
+
+ask_level:
+
+      input(ask_level,_TMC("LEVEL({0,% f}or ALL): "),3,ALPHA);
+      if ( !*ask_level ) goto opt_level;
+      tmstrcpy(level_ind,_TMC("Y"));
+      tmstrcpy(level,ask_level);
+      insert_colr_level();
+      if ( compare(level,_TMC("%"),EQS) ) goto get_campus;
+
+      goto ask_level;
+
+    opt_level:
+      if ( compare(level_ind,_TMC("Y"),EQS) ) goto get_campus;
+      tmstrcpy(parm_no,_TMC("11"));
+      sel_optional_ind(FIRST_ROW);
+      if ( compare(rpt_optional_ind,_TMC("O"),EQS) ) goto get_campus;
+    goto missing_parms;
+
+  get_campus:
+    input(ask_campus,TM_NLS_Get("X","CAMPUS: "),4,ALPHA);
+    if ( !*ask_campus ) goto opt_campus;
+    tmstrcpy(campus,ask_campus);
+    goto get_campus;
+  opt_campus:
+    tmstrcpy(parm_no,_TMC("12"));
+    sel_optional_ind(FIRST_ROW);
+    if ( compare(rpt_optional_ind,_TMC("O"),EQS) ) goto ask_line_count;
+    goto missing_parms;
+
+
+  ask_line_count:
+    input(ask_line_count_var,TM_NLS_Get("X","NUMBER OF LINES PRINTED PER PAGE [55]: "),26,NUM);
+    if ( !*ask_line_count_var ) goto init_line_count;
+    tmstrcpy(linelimit,ask_line_count_var);
+    goto end_parms;
+  init_line_count:
+    tmstrcpy(linelimit,_TMC("55"));
+    goto end_parms;
+
+/* *** Error Messages */
+
+  missing_parms:
+    tmprintf(&tmBundle, TM_NLS_Get("X","Required parameter is missing or invalid, aborting job\n"));
+    goto end_report;
+  no_parms:
+    tmprintf(&tmBundle, TM_NLS_Get("X","Parameter sequence number is invalid, aborting job\n"));
+    goto end_report;
+  end_parms:
+
+/* Macros which need to be executed one time per program execution */
+    seldate(FIRST_ROW);
+    selinst(FIRST_ROW);
+    seltitle(FIRST_ROW);
+/*  header(); */
+
+    EXEC SQL EXECUTE
+      BEGIN
+        szkrols.p_do_graderoll(:term,:crn, /*BIEN*/
+                   :current_user,
+                               :sessionid,
+                               :print_sel,
+                               :report_mode,
+                               :start_from_date,
+                               :start_to_date,
+                               :grade_term,
+                               :roll_title,
+                               :campus,
+                               :level
+                               );
+      END;
+    END-EXEC;
+    POSTORA;
+
+    write_report();
+
+    if (!tmstrcmp(report_mode,_TMC("A")))
+     { EXEC SQL EXECUTE BEGIN gb_common.p_rollback(NULL); END; END-EXEC; POSTORA; } /*BIEN*/
+
+end_report:
+
+    delete_colr();
+    delete_parms();
+    delete_prnt();
+
+
+/*****API Replaced EXEC SQL COMMIT; POSTORA;                            *****/
+
+    EXEC SQL EXECUTE BEGIN gb_common.p_commit(NULL); END; END-EXEC; POSTORA; /*BIEN*/
+    exit2os(EXIT_SUCCESS);
+
+  return EXIT_SUCCESS;
+}
+
+static int validate_one_up_no(int mode)
+{
+  EXEC SQL DECLARE cursor_001 CURSOR FOR
+        SELECT 'Y'
+        FROM GJBPRUN
+        WHERE GJBPRUN_JOB = :rptname
+        AND   GJBPRUN_ONE_UP_NO = TO_NUMBER(:rpt_one_up_no);
+
+  if ( mode==CLOSE_CURSOR )
+    {
+      EXEC SQL CLOSE cursor_001;
+      POSTORA;
+      return TRUE;
+  }
+
+  if ( mode==FIRST_ROW )
+    {
+      EXEC SQL OPEN cursor_001;
+      POSTORA;
+    }
+
+  EXEC SQL FETCH cursor_001 INTO
+       :valid_ind:Ind_01;
+  POSTORA;
+
+  if ( NO_ROWS_FOUND )
+    {
+      *valid_ind='\0';
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static int valid_term_code(void)
+{
+  tmstrcpy(valid_ind,_TMC("N"));
+
+  EXEC SQL SELECT 'Y' INTO :valid_ind
+        FROM STVTERM
+        WHERE STVTERM_CODE = :valid_term;
+
+  POSTORA;
+
+  if ( compare(valid_ind,_TMC("Y"),EQS) )
+      return TRUE;
+  else
+      return FALSE;
+}
+
+static void get_term_desc(void)
+{
+  EXEC SQL SELECT stvterm_desc
+      INTO term_desc
+      FROM stvterm
+     WHERE stvterm_code = :print_term;
+  POSTORA;
+}
+
+static int get_sotprnt(int mode)
+{
+  EXEC SQL DECLARE cursor_100 CURSOR FOR
+        SELECT sotprnt_rectype,
+               sotprnt_id,
+               sotprnt_name,
+               sotprnt_crn,
+               sotprnt_term_code,
+               sotprnt_ptrm_code,
+               sotprnt_subj_code,
+               sotprnt_crse_numb,
+               sotprnt_crse_title,
+               sotprnt_levl_code_1,
+               sotprnt_degc_code_1,
+               sotprnt_coll_code_1,
+               sotprnt_majr_code_1,
+               sotprnt_camp_code,
+               TO_CHAR(sotprnt_seqno_1),
+               sotprnt_levl_code_2,
+               sotprnt_degc_code_2,
+               sotprnt_coll_code_2,
+               sotprnt_majr_code_2,
+               TO_CHAR(sotprnt_seqno_2),
+               sotprnt_deg1_updated_ind,
+               sotprnt_deg1_created_ind,
+               sotprnt_deg2_updated_ind,
+               sotprnt_deg2_created_ind,
+               sotprnt_count_processed,
+               sotprnt_err_msg
+          FROM sotprnt
+         WHERE sotprnt_sessionid = :sessionid
+           AND sotprnt_job = 'SZRROLL'
+         ORDER BY sotprnt_recnum;
+
+  if ( mode==CLOSE_CURSOR )
+    {
+      EXEC SQL CLOSE cursor_100;
+      POSTORA;
+      return TRUE;
+  }
+
+  if ( mode==FIRST_ROW )
+    {
+      EXEC SQL OPEN cursor_100;
+      POSTORA;
+    }
+
+  EXEC SQL FETCH cursor_100 INTO
+       :sotprnt_rectype:Ind_01,
+       :sotprnt_id:Ind_02,
+       :sotprnt_name:Ind_03,
+       :sotprnt_crn:Ind_04,
+       :sotprnt_term:Ind_05,
+       :sotprnt_ptrm:Ind_06,
+       :sotprnt_subject:Ind_07,
+       :sotprnt_course:Ind_08,
+       :sotprnt_ctitle:Ind_09,
+       :sotprnt_levl_1:Ind_10,
+       :sotprnt_degc_1:Ind_11,
+       :sotprnt_coll_1:Ind_12,
+       :sotprnt_majr_1:Ind_13,
+       :sotprnt_camp:Ind_14,
+       :sotprnt_pseq1:Ind_15,
+       :sotprnt_levl_2:Ind_16,
+       :sotprnt_degc_2:Ind_17,
+       :sotprnt_coll_2:Ind_18,
+       :sotprnt_majr_2:Ind_19,
+       :sotprnt_pseq2:Ind_20,
+       :sotprnt_deg1_updated:Ind_21,
+       :sotprnt_deg1_created:Ind_22,
+       :sotprnt_deg2_updated:Ind_23,
+       :sotprnt_deg2_created:Ind_24,
+       :sotprnt_count_processed:Ind_25,
+       :sotprnt_err_msg:Ind_36;
+  POSTORA;
+
+  if ( NO_ROWS_FOUND )
+    {
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static void print_report(void)
+{
+  if (compare(sotprnt_rectype,_TMC("COURSE"),EQS))
+    {
+     if (compare(print_sel,_TMC("E"),EQS))
+       {
+        tmstrcpy(hold_course_ind,_TMC("Y"));
+        hold_course_info();
+       }
+     else
+        print_course();
+    }
+  else if (compare(sotprnt_rectype,_TMC("STUDNT"),EQS))
+     print_student();
+  else if (compare(sotprnt_rectype,_TMC("GRDERR"),EQS))
+     print_grade_err();
+  else if (compare(sotprnt_rectype,_TMC("HSTERR"),EQS))
+     print_hist_err();
+  else if (compare(sotprnt_rectype,_TMC("APIERR"),EQS))
+     print_api_err();
+  else if (compare(sotprnt_rectype,_TMC("CRQGDM"),EQS))
+     print_coreq_grade_miss();
+  else if (compare(sotprnt_rectype,_TMC("CRQGDF"),EQS))
+     print_coreq_diff_grade();
+
+  else if (compare(sotprnt_rectype,_TMC("FOOTER"),EQS))
+     print_footer();
+}
+
+/* Retrive mandatory/optional indicator for Parm */
+
+static int sel_optional_ind(int mode)
+{
+  EXEC SQL DECLARE cursor_002 CURSOR FOR
+        SELECT GJBPDEF_OPTIONAL_IND
+        FROM GJBPDEF
+        WHERE GJBPDEF_JOB = :rptname
+        AND   GJBPDEF_NUMBER = TO_NUMBER(:parm_no);
+
+  if ( mode==CLOSE_CURSOR )
+    {
+      EXEC SQL CLOSE cursor_002;
+      POSTORA;
+      return TRUE;
+  }
+
+  if ( mode==FIRST_ROW )
+    {
+      EXEC SQL OPEN cursor_002;
+      POSTORA;
+    }
+
+  EXEC SQL FETCH cursor_002 INTO
+       :rpt_optional_ind:Ind_01;
+  POSTORA;
+
+  if ( NO_ROWS_FOUND )
+    {
+      *rpt_optional_ind='\0';
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+/* Retrive line count Parm */
+
+static int read_line_count(int mode)
+{
+  EXEC SQL DECLARE cursor_003 CURSOR FOR
+        SELECT GJBPRUN_VALUE
+        FROM GJBPRUN
+        WHERE GJBPRUN_JOB = :rptname
+        AND   GJBPRUN_NUMBER = '99'
+        AND   GJBPRUN_ONE_UP_NO = TO_NUMBER(:rpt_one_up_no);
+
+  if ( mode==CLOSE_CURSOR )
+    {
+      EXEC SQL CLOSE cursor_003;
+      POSTORA;
+      return TRUE;
+  }
+
+  if ( mode==FIRST_ROW )
+    {
+      EXEC SQL OPEN cursor_003;
+      POSTORA;
+    }
+
+  EXEC SQL FETCH cursor_003 INTO
+       :linelimit:Ind_01;
+  POSTORA;
+
+  if ( NO_ROWS_FOUND )
+    {
+      *linelimit='\0';
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+/* Delete parameter table records */
+
+static void delete_parms(void)
+{
+  EXEC SQL
+        DELETE GJBPRUN
+        WHERE GJBPRUN_JOB = :rptname
+        AND   GJBPRUN_ONE_UP_NO = TO_NUMBER(:rpt_one_up_no);
+  POSTORA;
+}
+
+/* *** */
+
+static int readterm(int mode)
+{
+  EXEC SQL DECLARE cursor_004 CURSOR FOR
+        SELECT GJBPRUN_VALUE
+        FROM   GJBPRUN
+        WHERE  GJBPRUN_NUMBER = '01'
+        AND    GJBPRUN_JOB = UPPER(:rptname)
+        AND GJBPRUN_ONE_UP_NO = TO_NUMBER(:rpt_one_up_no);
+
+  if ( mode==CLOSE_CURSOR )
+    {
+      EXEC SQL CLOSE cursor_004;
+      POSTORA;
+      return TRUE;
+  }
+
+  if ( mode==FIRST_ROW )
+    {
+      EXEC SQL OPEN cursor_004;
+      POSTORA;
+    }
+
+  EXEC SQL FETCH cursor_004 INTO
+       :term:Ind_01;
+  POSTORA;
+
+  if ( NO_ROWS_FOUND )
+    {
+      *term='\0';
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static void readfromdate(void)
+{
+  EXEC SQL DECLARE cursor_020 CURSOR FOR
+        SELECT GJBPRUN_VALUE
+        FROM   GJBPRUN
+        WHERE  GJBPRUN_NUMBER = '02'
+        AND    GJBPRUN_JOB = UPPER(:rptname)
+        AND GJBPRUN_ONE_UP_NO = TO_NUMBER(:rpt_one_up_no);
+
+  EXEC SQL OPEN cursor_020;
+  POSTORA;
+
+  EXEC SQL FETCH cursor_020 INTO
+       :start_from_date:Ind_01;
+  POSTORA;
+
+  if ( NO_ROWS_FOUND )
+      *start_from_date='\0';
+
+  EXEC SQL CLOSE cursor_020;
+  POSTORA;
+}
+
+static void readtodate(void)
+{
+  EXEC SQL DECLARE cursor_021 CURSOR FOR
+        SELECT GJBPRUN_VALUE
+        FROM   GJBPRUN
+        WHERE  GJBPRUN_NUMBER = '03'
+        AND    GJBPRUN_JOB = UPPER(:rptname)
+        AND GJBPRUN_ONE_UP_NO = TO_NUMBER(:rpt_one_up_no);
+
+  EXEC SQL OPEN cursor_021;
+  POSTORA;
+
+  EXEC SQL FETCH cursor_021 INTO
+       :start_to_date:Ind_01;
+  POSTORA;
+
+  if ( NO_ROWS_FOUND )
+      *start_to_date='\0';
+
+  EXEC SQL CLOSE cursor_021;
+  POSTORA;
+}
+
+static void readgradeterm(void)
+{
+  EXEC SQL DECLARE cursor_022 CURSOR FOR
+        SELECT GJBPRUN_VALUE
+        FROM   GJBPRUN
+        WHERE  GJBPRUN_NUMBER = '09'
+        AND    GJBPRUN_JOB = UPPER(:rptname)
+        AND GJBPRUN_ONE_UP_NO = TO_NUMBER(:rpt_one_up_no);
+
+  EXEC SQL OPEN cursor_022;
+  POSTORA;
+
+  EXEC SQL FETCH cursor_022 INTO
+       :grade_term:Ind_01;
+  POSTORA;
+
+  if ( NO_ROWS_FOUND )
+      *grade_term='\0';
+
+  EXEC SQL CLOSE cursor_022;
+  POSTORA;
+}
+
+
+static void readrolltitle(void)
+{
+  EXEC SQL DECLARE cursor_023 CURSOR FOR
+        SELECT GJBPRUN_VALUE
+        FROM   GJBPRUN
+        WHERE  GJBPRUN_NUMBER = '10'
+        AND    GJBPRUN_JOB = UPPER(:rptname)
+        AND GJBPRUN_ONE_UP_NO = TO_NUMBER(:rpt_one_up_no);
+
+  EXEC SQL OPEN cursor_023;
+  POSTORA;
+
+  EXEC SQL FETCH cursor_023 INTO
+       :roll_title:Ind_01;
+  POSTORA;
+
+  if ( NO_ROWS_FOUND )
+      *roll_title='\0';
+
+  EXEC SQL CLOSE cursor_023;
+  POSTORA;
+}
+
+static int checkdates(void)
+{
+  if (  ( !*start_from_date && *start_to_date ) ||
+        ( *start_from_date && !*start_to_date)  )
+      {
+        tmprintf(&tmBundle, TM_NLS_Get("X","Start Range FROM_DATE and TO_DATE must both be entered, or both must be NULL.\n"));
+        return FALSE;
+      }
+
+  if ( *start_from_date && *start_to_date )
+    {
+     EXEC SQL DECLARE cursor_111 CURSOR FOR
+         SELECT 'X'
+          FROM   DUAL
+          WHERE  TO_DATE(:start_from_date,G$_DATE.GET_NLS_DATE_FORMAT) <=
+                                 TO_DATE(:start_to_date,G$_DATE.GET_NLS_DATE_FORMAT);
+
+     EXEC SQL OPEN cursor_111;
+     POSTORA;
+
+     EXEC SQL FETCH cursor_111 INTO
+          :dummy_var:Ind_01;
+     POSTORA;
+
+     if ( NO_ROWS_FOUND )
+       {
+         EXEC SQL CLOSE cursor_111;
+         POSTORA;
+         tmprintf(&tmBundle, TM_NLS_Get("X","Start Range FROM_DATE must be less than or equal to TO_DATE.\n"));
+         return FALSE;
+       }
+     EXEC SQL CLOSE cursor_111;
+     POSTORA;
+    }
+  return TRUE;
+}
+
+static int checkptrm(void)
+{
+  if  ( *start_from_date && *start_to_date )
+    if ( compare(ptrm,_TMC("%"),NES) )
+     {
+       tmprintf(&tmBundle, TM_NLS_Get("X","Must specify ALL for PTRM when using Start Date Range.\n"));
+       return FALSE;
+     }
+
+  return TRUE;
+}
+
+static int checkallterm(void)
+{
+  if ( compare(term,_TMC("%"),EQS) )
+    if  (  !(*start_from_date && *start_to_date ) )
+      {
+        tmprintf(&tmBundle, TM_NLS_Get("X","Must specify Start Date Range when value of Term is ALL.\n"));
+        return FALSE;
+      }
+
+  return TRUE;
+}
+
+static int selmacro(int mode)
+{
+  EXEC SQL DECLARE cursor_010 CURSOR FOR
+        SELECT GJBPRUN_VALUE
+        FROM   GJBPRUN
+        WHERE  GJBPRUN_NUMBER = '04'
+        AND    GJBPRUN_VALUE IS NOT NULL
+        AND    GJBPRUN_JOB = UPPER(:rptname)
+        AND GJBPRUN_ONE_UP_NO = TO_NUMBER(:rpt_one_up_no);
+
+  if ( mode==CLOSE_CURSOR )
+    {
+      EXEC SQL CLOSE cursor_010;
+      POSTORA;
+      return TRUE;
+  }
+
+  if ( mode==FIRST_ROW )
+    {
+      EXEC SQL OPEN cursor_010;
+      POSTORA;
+    }
+
+  EXEC SQL FETCH cursor_010 INTO
+       :ptrm:Ind_01;
+  POSTORA;
+
+  if ( NO_ROWS_FOUND )
+    {
+      *ptrm='\0';
+      return FALSE;
+    }
+
+  if ( !checkptrm() )
+    {
+      tmstrcpy(end_run,_TMC("Y"));
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+/* Standard select macros */
+
+static int readcrn(int mode)
+{
+  EXEC SQL DECLARE cursor_005 CURSOR FOR
+        SELECT GJBPRUN_VALUE
+        FROM   GJBPRUN
+        WHERE  GJBPRUN_NUMBER = '05'
+        AND    GJBPRUN_VALUE IS NOT NULL
+        AND    GJBPRUN_JOB = UPPER(:rptname)
+        AND GJBPRUN_ONE_UP_NO = TO_NUMBER(:rpt_one_up_no);
+
+  if ( mode==CLOSE_CURSOR )
+    {
+      EXEC SQL CLOSE cursor_005;
+      POSTORA;
+      return TRUE;
+  }
+
+  if ( mode==FIRST_ROW )
+    {
+      EXEC SQL OPEN cursor_005;
+      POSTORA;
+    }
+
+  EXEC SQL FETCH cursor_005 INTO
+       :crn:Ind_01;
+  POSTORA;
+
+  if ( NO_ROWS_FOUND )
+    {
+      *crn='\0';
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+
+static int readuser(int mode)
+{
+  EXEC SQL DECLARE cursor_006 CURSOR FOR
+        SELECT GJBPRUN_VALUE
+        FROM   GJBPRUN
+        WHERE  GJBPRUN_NUMBER = '06'
+        AND    GJBPRUN_JOB = UPPER(:rptname)
+        AND GJBPRUN_ONE_UP_NO = TO_NUMBER(:rpt_one_up_no);
+
+  if ( mode==CLOSE_CURSOR )
+    {
+      EXEC SQL CLOSE cursor_006;
+      POSTORA;
+      return TRUE;
+  }
+
+  if ( mode==FIRST_ROW )
+    {
+      EXEC SQL OPEN cursor_006;
+      POSTORA;
+    }
+
+  EXEC SQL FETCH cursor_006 INTO
+       :current_user:Ind_01;
+  POSTORA;
+
+  if ( NO_ROWS_FOUND )
+    {
+      *current_user='\0';
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static int readmode(int mode)
+{
+  EXEC SQL DECLARE cursor_007 CURSOR FOR
+        SELECT GJBPRUN_VALUE
+        FROM   GJBPRUN
+        WHERE  GJBPRUN_NUMBER = '07'
+        AND    GJBPRUN_JOB = UPPER(:rptname)
+        AND GJBPRUN_ONE_UP_NO = TO_NUMBER(:rpt_one_up_no);
+
+  if ( mode==CLOSE_CURSOR )
+    {
+      EXEC SQL CLOSE cursor_007;
+      POSTORA;
+      return TRUE;
+  }
+
+  if ( mode==FIRST_ROW )
+    {
+      EXEC SQL OPEN cursor_007;
+      POSTORA;
+    }
+
+  EXEC SQL FETCH cursor_007 INTO
+       :report_mode:Ind_01;
+  POSTORA;
+
+  if ( NO_ROWS_FOUND )
+    {
+      *report_mode='\0';
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static int readprint(int mode)
+{
+  EXEC SQL DECLARE cursor_008 CURSOR FOR
+        SELECT GJBPRUN_VALUE
+        FROM   GJBPRUN
+        WHERE  GJBPRUN_NUMBER = '08'
+        AND    GJBPRUN_JOB = UPPER(:rptname)
+        AND GJBPRUN_ONE_UP_NO = TO_NUMBER(:rpt_one_up_no);
+
+  if ( mode==CLOSE_CURSOR )
+    {
+      EXEC SQL CLOSE cursor_008;
+      POSTORA;
+      return TRUE;
+  }
+
+  if ( mode==FIRST_ROW )
+    {
+      EXEC SQL OPEN cursor_008;
+      POSTORA;
+    }
+
+  EXEC SQL FETCH cursor_008 INTO
+       :print_sel:Ind_01;
+  POSTORA;
+
+  if ( NO_ROWS_FOUND )
+    {
+      *print_sel='\0';
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static int readparms(int mode)
+{
+  EXEC SQL DECLARE cursor_009 CURSOR FOR
+        SELECT GJBPRUN_NUMBER,GJBPRUN_VALUE,GJBPDEF_DESC
+        FROM   GJBPRUN,GJBPDEF
+        WHERE  GJBPRUN_NUMBER = GJBPDEF_NUMBER
+        AND    GJBPRUN_JOB = GJBPDEF_JOB
+        AND    GJBPRUN_JOB = UPPER(:rptname)
+        AND GJBPRUN_ONE_UP_NO = TO_NUMBER(:rpt_one_up_no)
+        ORDER BY GJBPRUN_NUMBER,GJBPRUN_VALUE;
+
+  if ( mode==CLOSE_CURSOR )
+    {
+      EXEC SQL CLOSE cursor_009;
+      POSTORA;
+      return TRUE;
+  }
+
+  if ( mode==FIRST_ROW )
+    {
+      EXEC SQL OPEN cursor_009;
+      POSTORA;
+    }
+
+  EXEC SQL FETCH cursor_009 INTO
+       :parm_number:Ind_01,
+       :parm_value:Ind_02,
+       :parm_desc:Ind_03;
+  POSTORA;
+
+  if ( NO_ROWS_FOUND )
+    {
+      *parm_number='\0';
+      *parm_value='\0';
+      *parm_desc='\0';
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+
+static int readlevel(int mode)
+{
+  EXEC SQL DECLARE cursor_031 CURSOR FOR
+        SELECT GJBPRUN_VALUE
+        FROM   GJBPRUN
+        WHERE  GJBPRUN_NUMBER = '11'
+        AND    GJBPRUN_VALUE IS NOT NULL
+        AND    GJBPRUN_JOB = UPPER(:rptname)
+        AND GJBPRUN_ONE_UP_NO = TO_NUMBER(:rpt_one_up_no);
+
+  if ( mode==CLOSE_CURSOR )
+    {
+      EXEC SQL CLOSE cursor_031;
+      POSTORA;
+      return TRUE;
+  }
+
+  if ( mode==FIRST_ROW )
+    {
+      EXEC SQL OPEN cursor_031;
+      POSTORA;
+    }
+
+  EXEC SQL FETCH cursor_031 INTO
+       :level:Ind_01;
+  POSTORA;
+
+  if ( NO_ROWS_FOUND )
+    {
+      *level='\0';
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static int readcampus(int mode)
+{
+  EXEC SQL DECLARE cursor_032 CURSOR FOR
+        SELECT GJBPRUN_VALUE
+        FROM   GJBPRUN
+        WHERE  GJBPRUN_NUMBER = '12'
+        AND    GJBPRUN_VALUE IS NOT NULL
+        AND    GJBPRUN_JOB = UPPER(:rptname)
+        AND GJBPRUN_ONE_UP_NO = TO_NUMBER(:rpt_one_up_no);
+
+  if ( mode==CLOSE_CURSOR )
+    {
+      EXEC SQL CLOSE cursor_032;
+      POSTORA;
+      return TRUE;
+  }
+
+  if ( mode==FIRST_ROW )
+    {
+      EXEC SQL OPEN cursor_032;
+      POSTORA;
+    }
+
+  EXEC SQL FETCH cursor_032 INTO
+       :campus:Ind_01;
+  POSTORA;
+
+  if ( NO_ROWS_FOUND )
+    {
+      *campus='\0';
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+/* Standard select macros */
+/*                        */
+/* Get current date       */
+
+static int seldate(int mode)
+{
+  EXEC SQL DECLARE cursor_012 CURSOR FOR
+        SELECT TO_CHAR(SYSDATE,G$_DATE.GET_NLS_DATE_FORMAT)
+        FROM   DUAL;
+
+  if ( mode==CLOSE_CURSOR )
+    {
+      EXEC SQL CLOSE cursor_012;
+      POSTORA;
+      return TRUE;
+  }
+
+  if ( mode==FIRST_ROW )
+    {
+      EXEC SQL OPEN cursor_012;
+      POSTORA;
+    }
+
+  EXEC SQL FETCH cursor_012 INTO
+       :date:Ind_01;
+  POSTORA;
+
+  if ( NO_ROWS_FOUND )
+    {
+      *date='\0';
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+/* Get institution name from institution table */
+
+static int selinst(int mode)
+{
+  EXEC SQL DECLARE cursor_014 CURSOR FOR
+        SELECT GUBINST_NAME
+        FROM   GUBINST;
+
+  if ( mode==CLOSE_CURSOR )
+    {
+      EXEC SQL CLOSE cursor_014;
+      POSTORA;
+      return TRUE;
+  }
+
+  if ( mode==FIRST_ROW )
+    {
+      EXEC SQL OPEN cursor_014;
+      POSTORA;
+    }
+
+  EXEC SQL FETCH cursor_014 INTO
+       :institution:Ind_01;
+  POSTORA;
+
+  if ( NO_ROWS_FOUND )
+    {
+      *institution='\0';
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+/* Get title of report from report table */
+/* Change to use name of report program  */
+
+static int seltitle(int mode)
+{
+  EXEC SQL DECLARE cursor_015 CURSOR FOR
+        SELECT GJBJOBS_TITLE
+        FROM   GJBJOBS
+        WHERE  GJBJOBS_NAME= UPPER(:rptname);
+
+  if ( mode==CLOSE_CURSOR )
+    {
+      EXEC SQL CLOSE cursor_015;
+      POSTORA;
+      return TRUE;
+  }
+
+  if ( mode==FIRST_ROW )
+    {
+      EXEC SQL OPEN cursor_015;
+      POSTORA;
+    }
+
+  EXEC SQL FETCH cursor_015 INTO
+       :title_var:Ind_01;
+  POSTORA;
+
+  if ( NO_ROWS_FOUND )
+    {
+      *title_var='\0';
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+/* Application related select macros (alpha order) */
+
+/* Procedural macros             */
+/* *** Job submission alteration */
+/*                               */
+/* Add Retrieve Parms Macro      */
+
+static int retrieve_parms(void)
+{
+  tmstrcpy(end_run,_TMC("N"));
+  readterm(FIRST_ROW);
+  readfromdate();
+  readtodate();
+  if ( !checkallterm() )
+    return FALSE;
+  if ( !checkdates() )
+    return FALSE;
+  report(selmacro,insertptrm,NULL,NULL);
+  if ( compare(end_run,_TMC("Y"),EQS) )
+    return FALSE;
+  report(readcrn,insertcrn,NULL,NULL);
+  readuser(FIRST_ROW);
+  readmode(FIRST_ROW);
+  readprint(FIRST_ROW);
+  readgradeterm();
+  readrolltitle();
+  readcampus(FIRST_ROW);
+  report(readlevel,insertlevl,NULL,NULL);
+  read_line_count(FIRST_ROW);
+  if ( *linelimit )
+    return TRUE;
+  tmstrcpy(linelimit,_TMC("55"));
+  return TRUE;
+}
+
+static int readcolr(int mode)
+{
+  EXEC SQL DECLARE cursor_016 CURSOR FOR
+        SELECT SPRCOLR_PARM_NUMBER,SPRCOLR_VALUE_ATYP
+        FROM   SPRCOLR
+        WHERE  SPRCOLR_JOB = UPPER(:rptname)
+        AND    SPRCOLR_SESSIONID = :sessionid
+        /* AND    (SPRCOLR_PARM_NUMBER = '04' OR SPRCOLR_PARM_NUMBER = '05') */
+        AND    SPRCOLR_PARM_NUMBER in ('04', '05', '11')
+        ORDER BY SPRCOLR_PARM_NUMBER,SPRCOLR_VALUE_ATYP;
+
+  if ( mode==CLOSE_CURSOR )
+    {
+      EXEC SQL CLOSE cursor_016;
+      POSTORA;
+      return TRUE;
+  }
+
+  if ( mode==FIRST_ROW )
+    {
+      EXEC SQL OPEN cursor_016;
+      POSTORA;
+    }
+
+  EXEC SQL FETCH cursor_016 INTO
+       :parm_number:Ind_01,
+       :parm_value:Ind_02;
+  POSTORA;
+
+  if ( NO_ROWS_FOUND )
+    {
+      *parm_number='\0';
+      *parm_value='\0';
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+
+static void insert_colr_ptrm(void)
+{
+  EXEC SQL
+        INSERT INTO SPRCOLR /*BIEN*/
+          (sprcolr_sessionid, sprcolr_type, sprcolr_value_date,
+           sprcolr_value_atyp, sprcolr_activity_date,
+           sprcolr_job, sprcolr_parm_number)
+        VALUES (:sessionid,'','',:ptrm,SYSDATE,UPPER(:rptname),
+                '04');
+  POSTORA;
+}
+
+static void insert_colr_crn(void)
+{
+  EXEC SQL
+        INSERT INTO SPRCOLR /*BIEN*/
+          (sprcolr_sessionid, sprcolr_type, sprcolr_value_date,
+           sprcolr_value_atyp, sprcolr_activity_date,
+           sprcolr_job, sprcolr_parm_number)
+        VALUES (:sessionid,'','',:crn,SYSDATE,UPPER(:rptname),
+                '05');
+  POSTORA;
+}
+
+
+static void insert_colr_level(void)
+{
+  EXEC SQL
+        INSERT INTO SPRCOLR /*BIEN*/
+          (sprcolr_sessionid, sprcolr_type, sprcolr_value_date,
+           sprcolr_value_atyp, sprcolr_activity_date,
+           sprcolr_job, sprcolr_parm_number)
+        VALUES (:sessionid,'','',:level,SYSDATE,UPPER(:rptname),
+                '11');
+  POSTORA;
+}
+
+
+/* Get session id */
+
+static void getsession(void)
+{
+  EXEC SQL
+        SELECT USERENV('SESSIONID')
+  INTO :sessionid
+  FROM DUAL;
+  POSTORA;
+}
+
+static void delete_colr(void)
+{
+  EXEC SQL
+        DELETE FROM SPRCOLR
+        WHERE SPRCOLR_SESSIONID = :sessionid;
+  POSTORA;
+}
+
+static void delete_prnt(void)
+{
+  EXEC SQL
+        DELETE FROM SOTPRNT
+        WHERE SOTPRNT_SESSIONID = :sessionid
+        AND SOTPRNT_JOB = 'SZRROLL';
+  POSTORA;
+}
+
+static void lockcolr(void)
+{
+  EXEC SQL
+       LOCK TABLE SPRCOLR IN SHARE UPDATE MODE;
+  POSTORA;
+}
+
+/* Head macro executes after the first row is read. The heading information */
+/* is printed and then the first row is processed.                          */
+
+/* Heading information */
+
+static void header(void)
+{
+  table(T_BEGIN,2);
+  prtstr(date);
+  prtstr(time_var);
+  newcol();
+  setmode(M_CENTER);
+  prtstr(institution);
+  newcol();
+  prtstr(TM_NLS_Get("X","PAGE"));
+  add(pageno,pageno,one);
+  prtnum(pageno,_TMC("99999"));
+  newcol();
+  if ( compare(footer_ind,_TMC("Y"),NES) )
+    {
+      prtstr(print_term);
+      prtstr(term_desc);
+    }
+  newcol();
+  setmode(M_CENTER);
+  prtstr(title_var);
+  newcol();
+  prtstr(rptname);
+  skipline(1);
+
+/* Set line number equal to number of lines in heading */
+
+  tmstrcpy(lineno,_TMC("3"));
+  table(T_END);
+}
+
+/* Print foot of report after all rows have been processed. */
+/* Foot should contain at least all user defined parameters */
+/* and a count of processed records.                        */
+
+static void print_footer(void)
+{
+  tmstrcpy(footer_ind,_TMC("Y"));
+  newpage();
+  header();
+  setmode(M_CENTER);
+  prtstr(TM_NLS_Get("X","* * * REPORT CONTROL INFORMATION -"));
+  prtstr(rptname);
+  prtstr(TM_NLS_Get("X","- Release 8.7 [MCLA:002.1.0]"));
+  setmode(M_NORMAL);
+  skipline(1);
+  prtstr(TM_NLS_Get("X","Term:"));
+  prtstr(term);
+  newline();
+  prtstr(TM_NLS_Get("X","Start Range From Date:"));
+  prtstr(start_from_date);
+  newline();
+  prtstr(TM_NLS_Get("X","Start Range To Date:"));
+  prtstr(start_to_date);
+  report(readparms,printparm,NULL,NULL);
+  if ( compare(ptrm_ind,_TMC("Y"),EQS) ) goto read_collector;
+  if ( compare(crn_ind,_TMC("Y"),EQS) ) goto read_collector;
+  if ( compare(level_ind,_TMC("Y"),EQS) ) goto read_collector;
+  goto continue_print;
+  read_collector:
+    report(readcolr,print_collector_parm,NULL,NULL);
+  continue_print:
+    newline();
+    prtstr(TM_NLS_Get("X","Current User:"));
+    prtstr(current_user);
+    newline();
+    prtstr(TM_NLS_Get("X","Report Mode:"));
+    prtstr(report_mode);
+    newline();
+    prtstr(TM_NLS_Get("X","Print Selection:"));
+    prtstr(print_sel);
+    newline();
+    prtstr(TM_NLS_Get("X","Grade Term:"));
+    prtstr(grade_term);
+    newline();
+    prtstr(TM_NLS_Get("X","Roll Long Section Title:"));
+    prtstr(roll_title);
+    newline();
+    skipline(1);
+    prtstr(TM_NLS_Get("X","RECORD COUNT:"));
+    prtnum(sotprnt_count_processed,_TMC("9999990"));
+}
+
+static void printparm(void)
+{
+  if ( compare(parm_number,_TMC("01"),EQS) ) return;
+  if ( compare(parm_number,_TMC("02"),EQS) ) return;
+  if ( compare(parm_number,_TMC("03"),EQS) ) return;
+  if ( compare(parm_number,_TMC("06"),EQS) ) return;
+  if ( compare(parm_number,_TMC("07"),EQS) ) return;
+  if ( compare(parm_number,_TMC("08"),EQS) ) return;
+  if ( compare(parm_number,_TMC("09"),EQS) ) return;
+  if ( compare(parm_number,_TMC("10"),EQS) ) return;
+  if ( compare(parm_number,_TMC("05"),EQS) ) goto parm_5;
+
+  if ( compare(ptrm_ind,_TMC("Y"),EQS) ) return;
+  newline();
+  prtstr(parm_desc);
+  prtstr(_TMC(":"));
+  prtstr(parm_value);
+  return;
+  parm_5:
+    if ( compare(crn_ind,_TMC("Y"),EQS) ) return;
+    newline();
+    prtstr(parm_desc);
+    prtstr(_TMC(":"));
+    prtstr(parm_value);
+    return;
+
+}
+
+static void print_collector_parm(void)
+{
+  if ( compare(parm_number,_TMC("01"),EQS) ) return;
+  if ( compare(parm_number,_TMC("04"),EQS) ) return;
+  if ( compare(parm_number,_TMC("03"),EQS) ) goto parm_3;
+
+  if ( compare(ptrm_ind,_TMC("N"),EQS) ) return;
+  newline();
+  prtstr(TM_NLS_Get("X","Ptrm:"));
+  prtstr(parm_value);
+  return;
+  parm_3:
+    if ( compare(crn_ind,_TMC("N"),EQS) ) return;
+    newline();
+    prtstr(TM_NLS_Get("X","Course Reference Number:"));
+    prtstr(parm_value);
+    return;
+}
+
+static void hold_course_info(void)
+{
+   tmstrcpy(hold_term,sotprnt_term);
+   tmstrcpy(hold_crn,sotprnt_crn);
+   tmstrcpy(hold_ptrm,sotprnt_ptrm);
+   tmstrcpy(hold_subject,sotprnt_subject);
+   tmstrcpy(hold_course,sotprnt_course);
+   tmstrcpy(hold_ctitle,sotprnt_ctitle);
+}
+
+static void print_course(void)
+{
+  if (compare(hold_course_ind,_TMC("Y"),EQS))
+     tmstrcpy(sotprnt_term,hold_term);
+  add(lineno,lineno,five);
+  if ( compare(lineno,linelimit,LT) &&
+       compare(sotprnt_term,print_term,EQS) ) goto samepage;
+  tmstrcpy(print_term,sotprnt_term);
+  get_term_desc();
+  if ( compare(pageno,_TMC("0"),NES) )
+    newpage();
+  header();
+  add(lineno,lineno,five);
+  samepage:
+    table(T_BEGIN,3);
+    skipline(4);
+    if (compare(hold_course_ind,_TMC("Y"),EQS))
+       prtstr(hold_crn);
+    else
+       prtstr(sotprnt_crn);
+    newcol();
+    if (compare(hold_course_ind,_TMC("Y"),EQS))
+       prtstr(hold_ptrm);
+    else
+       prtstr(sotprnt_ptrm);
+    newcol();
+    if (compare(hold_course_ind,_TMC("Y"),EQS))
+       prtstr(hold_subject);
+    else
+       prtstr(sotprnt_subject);
+    newcol();
+    if (compare(hold_course_ind,_TMC("Y"),EQS))
+       prtstr(hold_course);
+    else
+       prtstr(sotprnt_course);
+    newcol();
+    if (compare(hold_course_ind,_TMC("Y"),EQS))
+       prtstr(hold_ctitle);
+    else
+       prtstr(sotprnt_ctitle);
+    tmstrcpy(hold_course_ind,_TMC("N"));
+    newcol();
+    /* Defect 87599: Print header in audit mode too.     */
+    /* if ( compare(report_mode,"A",EQS) ) goto ok_inst; */
+    /* if ( compare(report_mode,"a",EQS) ) goto ok_inst; */
+    prtstr(TM_NLS_Get("X","Degree"));
+    newcol();
+    prtstr(TM_NLS_Get("X","Levl"));
+    newcol();
+    prtstr(TM_NLS_Get("X","Coll"));
+    newcol();
+    prtstr(TM_NLS_Get("X","Majr"));
+    newcol();
+    prtstr(TM_NLS_Get("X","Seq"));
+    newcol();
+    prtstr(TM_NLS_Get("X","Cmp"));
+
+    /*
+    newcol();
+    prtstr(TM_NLS_Get("X","Pgm"));
+    */
+  /* ok_inst: */
+    table(T_END);
+}
+
+static void write_report(void)
+{
+  report(get_sotprnt,print_report,NULL,NULL);
+}
+
+static void print_grade_err(void)
+{
+    if (compare(hold_course_ind,_TMC("Y"),EQS))
+       print_course();
+    add(lineno,lineno,one);
+    if ( compare(lineno,linelimit,LT) ) goto thispage;
+    newpage();
+    header();
+    add(lineno,lineno,one);
+  thispage:
+    table(T_BEGIN,4);
+    prtstr(sotprnt_id);
+    newcol();
+    prtstr(sotprnt_name);
+    newcol();
+    prtstr(TM_NLS_Get("X","No Substitute Grade Found"));
+    newcol();
+    prtstr(TM_NLS_Get("X","*ERROR*"));
+    table(T_END);
+}
+
+static void print_hist_err(void)
+{
+    if (compare(hold_course_ind,_TMC("Y"),EQS))
+       print_course();
+    add(lineno,lineno,one);
+    if ( compare(lineno,linelimit,LT) ) goto thispage0;
+    newpage();
+    header();
+    add(lineno,lineno,one);
+  thispage0:
+    table(T_BEGIN,4);
+    prtstr(sotprnt_id);
+    newcol();
+    prtstr(sotprnt_name);
+    newcol();
+    prtstr(TM_NLS_Get("X","Graded Section Exists in History"));
+    newcol();
+    prtstr(TM_NLS_Get("X","*ERROR*"));
+    table(T_END);
+}
+
+static void print_api_err(void)
+{
+    if (compare(hold_course_ind,_TMC("Y"),EQS))
+       print_course();
+    add(lineno,lineno,one);
+    if ( compare(lineno,linelimit,LT) ) goto thispage0;
+    newpage();
+    header();
+    add(lineno,lineno,one);
+  thispage0:
+    table(T_BEGIN,4);
+    prtstr(sotprnt_id);
+    newcol();
+    prtstr(sotprnt_name);
+    newcol();
+    prtstr(TM_NLS_Get("X","API Error"));
+    table(T_END);
+    table(T_BEGIN,5);
+    prtstr(sotprnt_err_msg);
+    table(T_END);
+}
+
+
+static void print_coreq_grade_miss(void)
+{
+    if (compare(hold_course_ind,_TMC("Y"),EQS))
+       print_course();
+    add(lineno,lineno,one);
+    if ( compare(lineno,linelimit,LT) ) goto thispage;
+    newpage();
+    header();
+    add(lineno,lineno,one);
+  thispage:
+    table(T_BEGIN,4);
+    prtstr(sotprnt_id);
+    newcol();
+    prtstr(sotprnt_name);
+    newcol();
+    prtstr(TM_NLS_Get("X","Corequisite grade missing"));
+    newcol();
+    prtstr(TM_NLS_Get("X","*ERROR*"));
+    table(T_END);
+}
+
+
+static void print_coreq_diff_grade(void)
+{
+    if (compare(hold_course_ind,_TMC("Y"),EQS))
+       print_course();
+    add(lineno,lineno,one);
+    if ( compare(lineno,linelimit,LT) ) goto thispage;
+    newpage();
+    header();
+    add(lineno,lineno,one);
+  thispage:
+    table(T_BEGIN,4);
+    prtstr(sotprnt_id);
+    newcol();
+    prtstr(sotprnt_name);
+    newcol();
+    prtstr(TM_NLS_Get("X","Different corequisite grades"));
+    newcol();
+    prtstr(TM_NLS_Get("X","*ERROR*"));
+    table(T_END);
+}
+
+
+static void print_student(void)
+{
+    if (compare(hold_course_ind,_TMC("Y"),EQS))
+       print_course();
+    add(lineno,lineno,one);
+    if ( compare(lineno,linelimit,LT) ) goto thispage1;
+    newpage();
+    header();
+    add(lineno,lineno,one);
+  thispage1:
+    table(T_BEGIN,4);
+    prtstr(sotprnt_id);
+    newcol();
+    prtstr(sotprnt_name);
+    newcol();
+    prtstr(TM_NLS_Get("X","Rolled to Academic History"));
+    newcol();
+    /* Defect 87599: Print header info in audit mode too.*/
+    /* if ( compare(report_mode,"A",EQS) ) goto aud_mode;*/
+    /* if ( compare(report_mode,"a",EQS) ) goto aud_mode;*/
+    /*  print this in the header so the pgm fits:  prtstr("Applied to:");
+    newcol();  */
+    setmode(M_CENTER);
+    prtstr(sotprnt_degc_1);
+    newcol();
+    setmode(M_CENTER);
+    prtstr(sotprnt_levl_1);
+    newcol();
+    setmode(M_CENTER);
+    prtstr(sotprnt_coll_1);
+    newcol();
+    setmode(M_CENTER);
+    prtstr(sotprnt_majr_1);
+    newcol();
+    setmode(M_CENTER);
+    prtnum(sotprnt_pseq1,_TMC("99"));
+    newcol();
+    prtstr(sotprnt_camp);
+    newcol();
+    prtstr(sotprnt_ctitle);
+    newcol();
+    if ( compare(sotprnt_deg1_created,_TMC("N"),EQS) ) goto check_majr;
+    prtstr(TM_NLS_Get("X","Deg Created"));
+    goto aok;
+  check_majr:
+    if ( compare(sotprnt_deg1_updated,_TMC("N"),EQS) ) goto aok;
+    prtstr(TM_NLS_Get("X","Deg Updated"));
+  aok:
+    newcol();
+    goto end_it;
+  /* aud_mode: */
+    newcol();
+    newcol();
+    newcol();
+    newcol();
+    newcol();
+    newcol();
+   /* newcol(); */
+  end_it:
+    if ( compare(sotprnt_pseq2,_TMC("0"),EQS) ) goto end_it2;
+    /* Defect 106084: If the pseq2 value is null, we have nothing else to print. */
+    if (!*sotprnt_pseq2) goto end_it2;
+    add(lineno,lineno,one);
+    if ( compare(lineno,linelimit,GES) )
+    {
+      newpage();
+      header();
+      add(lineno,lineno,one);
+      prtstr(sotprnt_id);
+      newcol();
+      prtstr(sotprnt_name);
+      newcol();
+    }
+    else
+    {
+      newcol();
+      newcol();
+    }
+    prtstr(TM_NLS_Get("X","Rolled to Academic History"));
+    newcol();
+    /* Defect 87599: Print header info in audit mode too. */
+    /* if ( compare(report_mode,"A",EQS) ) goto aud_mode2;*/
+    /* if ( compare(report_mode,"a",EQS) ) goto aud_mode2;*/
+    prtstr(TM_NLS_Get("X","Applied to:"));
+    newcol();
+    setmode(M_CENTER);
+    prtstr(sotprnt_degc_2);
+    newcol();
+    setmode(M_CENTER);
+    prtstr(sotprnt_levl_2);
+    newcol();
+    setmode(M_CENTER);
+    prtstr(sotprnt_coll_2);
+    newcol();
+    setmode(M_CENTER);
+    prtstr(sotprnt_majr_2);
+    newcol();
+    setmode(M_CENTER);
+    prtnum(sotprnt_pseq2,_TMC("99"));
+    newcol();
+    prtstr(sotprnt_camp);
+    newcol();
+    if ( compare(sotprnt_deg2_created,_TMC("N"),EQS) ) goto check_majr2;
+    prtstr(TM_NLS_Get("X","Deg Created"));
+    goto aok2;
+  check_majr2:
+    if ( compare(sotprnt_deg2_updated,_TMC("N"),EQS) ) goto aok2;
+    prtstr(TM_NLS_Get("X","Deg Updated"));
+  aok2:
+    newcol();
+    goto end_it2;
+  /* aud_mode2: */
+    newcol();
+    newcol();
+    newcol();
+    newcol();
+    newcol();
+    newcol();
+    newcol();
+  end_it2:
+    table(T_END);
+}
+
+static void insertptrm(void)
+{
+  lockcolr();
+  insert_colr_ptrm();
+}
+
+static void insertcrn(void)
+{
+  lockcolr();
+  insert_colr_crn();
+}
+
+
+static void insertlevl(void)
+{
+  lockcolr();
+  insert_colr_level();
+}

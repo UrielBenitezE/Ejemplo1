@@ -1,0 +1,1818 @@
+/*TMCI18N BEGIN HEADER*/
+#if !defined( tmBundle_EXISTS )
+#define TM_ON_STARTUP tmInitGlobS_szptrns
+#include "tmcilib.h"
+#define MAXCHAREXTLINE 254
+#define TRUE      1
+#define FALSE     0
+
+static struct TMBundle tmBundle = {"szptrns.pc",NULL,NULL,NULL,NULL};
+#define tmBundle_EXISTS
+#endif
+/*TMCI18N END HEADER*/
+/******************************************************************************/
+/* szptrns.pc                                                                 */
+/* Copyright 2024 Ellucian Company L.P. and its affiliates.                   */
+/******************************************************************************/
+/*                                                                            */
+/*                          INFORMACION DEL PROYECTO                          */
+/*                                                                            */
+/******************************************************************************/
+/*                                                                            */
+/* Descripcion: Massive load grades activities.                               */
+/*                                                                            */
+/******************************************************************************/
+/*                                                                            */
+/*                    INFORMACION CONFIDENCIAL DE NEGOCIOS                    */
+/*                                                                            */
+/* Este software contiene informacion confidencial y privada de Ellucian o de */
+/* sus subsidiarias. El uso de este software esta limitado a los              */
+/* licenciatarios de Ellucia, y esta sujeto a los terminos y condiciones de   */
+/* uno o mas acuerdos escritos entre Ellcian y los licenciatarios.            */
+/*                                                                            */
+/******************************************************************************/
+/*                                                                            */
+/* AUDIT TRAIL: 8.7.0 [UTM:002.1.0]                           INI    DATE     */
+/* ---------------------------------------------------------- --- ----------- */
+/* 1. Creacion del Codigo.                                    DLO 12/FEB/2016 */
+/*    --------------------                                                    */
+/* El proceso realiza la Carga masiva de equivalencias externas para alumno.  */
+/*                                                                            */
+/* ---------------------------------------------------------- --- ----------- */
+/*  AUDIT TRAIL: 8.31.2 [MOD:02.2.0]                          INI    DATE     */
+/* ---------------------------------------------------------- --- ----------- */
+/* 1. STUDENT version updgrade from 8.7 to 8.31.2             LMR 17/Dic/2024 */
+/*    -------------------------------------------                             */
+/* Student version updated.                                                   */
+/* ---------------------------------------------------------- --- ----------- */
+/*                                                                            */
+/* AUDIT TRAIL END                                                            */
+/*                                                                            */
+/******************************************************************************/
+
+/******************************************************************************/
+/*                                                                            */
+/* INCLUDES AND DEFINES                                                       */
+/*                                                                            */
+/******************************************************************************/
+
+#include "guarpfe.h"
+EXEC SQL INCLUDE guaorac.c;
+#define SCT_DEBUG
+
+/******************************************************************************/
+/*                                                                            */
+/* HOST VARIABLES AND OTHER EXECS                                             */
+/*                                                                            */
+/******************************************************************************/
+EXEC SQL BEGIN DECLARE SECTION;
+  /* Job Submission & Process variables */
+  static TMCHAR vRptOneUpNo[20]       = {0};
+  static TMCHAR vDummy[31]            = {0};
+  static TMCHAR vVersion[30]          = {0};
+  static TMCHAR vRptName[10]          = {0};
+
+  /* Report Output Variables */
+  static TMCHAR vNow[40]              = {0};
+  static NUMSTR TMCHARRYT_GLOB_DCL(vPageNum,27,_TMC("1"));
+  static NUMSTR TMCHARRYT_GLOB_DCL(vCurrLine,27,_TMC("0"));
+  static TMCHAR vInstitution[31]      = {0};
+  static TMCHAR vRptTitle[31]         = {0};
+
+  /* Parameter Variables */
+  static TMCHAR pvFileName[128];                             /* State File name        */
+  static TMCHAR pReportMode[2]        = {0};                 /*  Required     */
+  
+  /* Process Variables */
+  static UFILE  *vFile;                                     /* File Pointer var       */
+  static TMCHAR pvFileFullName[128];                        /* State File name        */
+  static TMCHAR pvFilePath[128];                            /* State File Path        */
+  static TMCHAR vCharSeparator[128];                        /* Character separator    */
+  static NUMSTR TMCHARRYT_GLOB_DCL(vRecRead,27,_TMC("0"));
+  static NUMSTR TMCHARRYT_GLOB_DCL(vRecIgnored,27,_TMC("0"));
+  static NUMSTR TMCHARRYT_GLOB_DCL(vRowsRead,27,_TMC("0"));
+  static TMCHAR vFileLine[410];
+  
+  static TMCHAR lvID[12]           = {0};
+  static TMCHAR lvInsti[10]         = {0}; 
+  static TMCHAR lvTerm[10]          = {0}; 
+  static TMCHAR lvFolio[100]        = {0};   
+  static TMCHAR lvLevel[10]         = {0};
+  static TMCHAR lvSubject[10]       = {0};
+  static TMCHAR lvCrseNumb[10]      = {0};
+  static TMCHAR lvGrdeCode[10]      = {0};
+  static TMCHAR lvGModCode[10]      = {0};
+  
+  /*  MKU  Changed    17/Apr/2016  */
+  /*
+  static TMCHAR lvID[10]           = {0};    
+  static TMCHAR lvInsti[7]         = {0};   
+  static TMCHAR lvTerm[7]          = {0};   
+  static TMCHAR lvFolio[61]        = {0};    
+  static TMCHAR lvLevel[3]         = {0};
+  static TMCHAR lvSubject[5]       = {0};
+  static TMCHAR lvCrseNumb[6]      = {0};
+  static TMCHAR lvGModCode[2]      = {0};   
+  static TMCHAR lvGrdeCode[7]      = {0};   
+  */
+  
+  static TMCHAR lvPIDM[9]          = {0};  
+  static TMCHAR vErrorCode[2]      = {0};
+  static TMCHAR vErrMsg[501]       = {0};
+  static TMCHAR lv_name_stdn[100]  = {0};  
+  static TMCHAR lv_Sub_Crse[100]   = {0};     
+
+
+
+
+
+  
+  static TMCHAR sztveeq_pidm[10]      = {0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR sztveeq_id[100]       = {0};        
+  static TMCHAR sztveeq_sbgi_code[7]  = {0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR sztveeq_term_code[7]  = {0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR sztveeq_folio[100]    = {0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR sztveeq_level_code[3] = {0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR sztveeq_subj_code[5]  = {0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR sztveeq_crse_numb[6]  = {0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR sztveeq_gmod_code[2]  = {0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR sztveeq_grde_code[7]  = {0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR sztveeq_status[2]     = {0}/*TMCI18N CHANGED FROM ""*/;    
+  static TMCHAR sztveeq_error[600]    = {0}/*TMCI18N CHANGED FROM ""*/;       
+  
+  static TMCHAR lv_trit_seq_no[3]     = {0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR lv_tram_seq_no[3]     = {0}/*TMCI18N CHANGED FROM ""*/;  
+  static TMCHAR lv_trcr_seq_no[4]     = {0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR lv_trce_seq_no[4]     = {0}/*TMCI18N CHANGED FROM ""*/;  
+
+  static TMCHAR lv_crse_credit_hr_low[8]  = {0}/*TMCI18N CHANGED FROM ""*/;
+  static TMCHAR lv_crse_title[35]         = {0}/*TMCI18N CHANGED FROM ""*/;  
+  static TMCHAR lv_status_last[2]        = {0}/*TMCI18N CHANGED FROM ""*/;  
+  static TMCHAR lv_message[100]          = {0}/*TMCI18N CHANGED FROM ""*/;
+  
+  
+  /* Shared Indicator Array */
+  static short vIndArr[30] = { 0,0,0,0,0,0,0,0,0,0,
+                               0,0,0,0,0,0,0,0,0,0,
+                               0,0,0,0,0,0,0,0,0,0
+                             };
+
+  /************************************************************************************** /
+  static char stringext[MAXCHAREXTLINE];
+  / **************************************************************************************/
+
+  /* Dynamic SQL Commands Variables */
+/*TMCHAR           pPreSELECT[2000];
+  TMCHAR8          pSELECT[2000];*/
+
+  /* Processing Variables */
+  EXEC SQL END DECLARE SECTION;
+
+  static TMCHAR  gMsgBuf[140];
+  static size_t  gBufSize = 140;
+  static size_t  gMsgLen;
+  TMCHAR array[101];
+/*****************************************************************************/
+/*                                                                           */
+/* PROTOTYPES                                                                */
+/*                                                                           */
+/*****************************************************************************/
+
+/* Process functions */
+static void    mc_ProcessFile(void);
+static int     mc_OpenFile(void);
+static void    mc_ValidaData(void);
+static TMCHAR *getField(int pos);
+static int     mc_ReadFileLines(void);
+static int     mc_CloseFile(void);
+static void    mc_MainProcess(void);
+static void    mc_Process_Equivalence(void);
+
+
+/* Printing functions */
+static void    mc_Header(void);
+static void    mc_SubHeader(TMCHAR *Str);
+static void    mc_ControlReport(void);
+static void    mc_Line( void );
+
+
+/* Parameter Reading functions */
+static void    mc_RetrieveParms(void);
+static TMCHAR *mc_SelParms(int PnumIn, TMCHAR *DelimiterIn);
+static void    mc_CheckParms(void);
+static void    mc_GetInstitution(void);
+static void    mc_GetTitle(void);
+static void    mc_GetToday(void);
+
+/* Error Handling functions */
+static void    mc_ValidateOneUpNo(void);
+static void    mc_ErrMsg(TMCHAR *StringIn);
+static void    mc_Bomb(TMCHAR *Str);
+static void    mc_RollbackRelease(void);
+
+/* Error Handling functions */
+
+/*****************************************************************************/
+/*                                                                           */
+/* MAIN                                                                      */
+/*                                                                           */
+/*****************************************************************************/
+int main ( int argc, TMCHAR *argv[] )
+{
+  rptopen( user_pass, argc, argv );
+  login();
+// BA LMR 17-12-2024 [MOD:02.2.0]
+  //tmstrcpy( vVersion, _TMC("8.7.0 [UTM:002.1.0]") );
+  tmstrcpy( vVersion, _TMC("8.31.2 [MOD:02.2.0]") );
+// EA LMR 17-12-2024 [MOD:02.2.0]
+  tmstrcpy( vRptName, _TMC("SZPTRNS") );
+
+  tmprintf(&tmBundle,  TM_NLS_Get("X", "Iniciando {0} (Version: {1})\n\n"), vRptName, vVersion );
+
+  /* Tables definition */
+  table(T_DEFINE, 1, 1, 160, NULL);
+  table(T_DEFINE, 2, 1, 11, 13, 138, 140,160, NULL); 
+  table(T_DEFINE, 3, 1, 80, 82, 160, NULL);
+  table(T_DEFINE, 4, 1, 10, 12, 41, 43, 52, 54, 160, NULL);
+
+  pgformat(1,66);
+
+  input( vRptOneUpNo, TM_NLS_Get("X", "Numero de Secuencia de Ejecucion:"), 26, NUM );
+  if( *vRptOneUpNo ) mc_ValidateOneUpNo();
+
+  mc_RetrieveParms();
+  mc_CheckParms();
+  mc_GetInstitution();
+  mc_GetTitle();
+  mc_GetToday();
+
+  table(T_BEGIN, 1);
+  mc_Header();
+
+  mc_ProcessFile();
+  
+  /* Process Data. */
+  mc_MainProcess();
+
+  mc_ControlReport();
+  
+
+  EXEC SQL
+    DELETE SZTVEEQ
+     WHERE SZTVEEQ_SESSIONID = SYS_CONTEXT ('USERENV', 'SESSIONID');
+  POSTORA;
+  
+  
+  EXEC SQL
+    COMMIT;
+  POSTORA;
+
+  exit2os( EXIT_SUCCESS );
+  return EXIT_SUCCESS;
+}
+
+/*****************************************************************************/
+/*****************************************************************************/
+/**                                                                         **/
+/**                          PROCESS FUNCTIONS                              **/
+/**                                                                         **/
+/*****************************************************************************/
+/*****************************************************************************/
+
+
+/******************************************************************************/
+/*                   Routine to open the file to process                      */
+/******************************************************************************/
+
+static int mc_OpenFile(void)
+{
+  #ifdef SCT_DEBUG
+    tmprintf(&tmBundle,  TM_NLS_Get("x","DEBUG: Full name of the file: [{0}]\n"), pvFileFullName );
+  #endif
+
+  if ( ( vFile = tmfopen(&tmBundle,  pvFileFullName, _TMC("r") ) ) == NULL )
+  {
+    tmprintf(&tmBundle,  TM_NLS_Get("x","{0} gender error Input/Output\n"), pvFileFullName );
+    exit2os( EXIT_FAILURE );
+  }
+  return 0;
+}
+
+/*****************************************************************************/
+/* Gets the value that corresponds to the field number specified by pos      */
+/* parameter.                                                                */
+/*****************************************************************************/
+static TMCHAR *getField(int pos)
+{
+   int start = 0;
+   int end   = 0;
+   int i;
+   int fnum  = 0;
+
+   for (i=0; i<tmstrlen(vFileLine); i++)
+   {
+      if (vFileLine[i] == vCharSeparator[0])
+      {
+         start = (end==0?end:end+1);
+         end   = i;
+         fnum++;
+
+         if (fnum == pos)
+         {
+            substr( array, vFileLine, start, end-start);
+            return array;
+         }
+      }
+   }
+
+   if (fnum+1 == pos)
+   {
+      start = (end==0?end:end+1);
+      end   = tmstrlen(vFileLine);
+	  if (vFileLine[end-1] == '\n' ) { /* Al final hay retorno de carro */
+	    end -= 1;
+	  }
+	  if (vFileLine[end-1] == '\r' ) { /* Al final hay retorno de carro */
+	    end -= 1;
+	  }
+
+      substr( array, vFileLine, start, end-start);
+      return array;
+   }
+
+   tmstrcpy(array,_TMC(""));
+   return array;
+}
+
+static void mc_ValidaData(void)
+{
+    EXEC SQL BEGIN DECLARE SECTION;
+       static TMCHAR lv_exists[2] = {0};
+    EXEC SQL END DECLARE SECTION;
+	
+      #ifdef SCT_DEBUG
+        tmprintf(&tmBundle, TM_NLS_Get("x", "Executing mc_ValidaData.\n"));
+      #endif
+	  
+	  tmstrcpy(vErrMsg, _TMC(""));
+	  
+      /* VALIDATING IF ID EXIST IN BANNER */
+      EXEC SQL
+         EXECUTE
+           DECLARE
+              CURSOR GET_SPRIDEN_PIDM_ID_C IS
+                 SELECT SPRIDEN_PIDM
+                   FROM SPRIDEN
+                  WHERE SPRIDEN_ID = :lvID
+                    AND SPRIDEN_CHANGE_IND IS NULL;
+                    /*  MKU  Changed    16/Apr/2016  */
+                    /* AND ROWNUM = 1; */
+                    
+           BEGIN               
+               IF gb_common.f_id_exists(nvl(:lvID, '')) = 'Y' THEN /*BIEN*/
+                  OPEN GET_SPRIDEN_PIDM_ID_C;
+                 FETCH GET_SPRIDEN_PIDM_ID_C
+                  INTO :lvPIDM;
+                 CLOSE GET_SPRIDEN_PIDM_ID_C;
+				 :lv_exists := 'Y';
+               ELSE
+                  :lvPIDM    := '0';                  
+				  :lv_exists := 'N';
+               END IF;
+           END;
+      END-EXEC;
+      POSTORA;	  
+	  
+      if ( *lv_exists == 'N' )
+      {
+           tmstrcpy(vErrMsg, TM_NLS_Get("X","ID does not exist in BANNER."));
+	    return;
+      }
+	  
+	  /* VALIDATING INSTITUTION */
+	  EXEC SQL
+      EXECUTE
+        DECLARE 
+           CURSOR GET_EXISTS_INSTI_C IS
+              SELECT 'X'
+                FROM STVSBGI
+               WHERE STVSBGI_CODE = :lvInsti; 
+		   
+        BEGIN
+           OPEN GET_EXISTS_INSTI_C;
+          FETCH GET_EXISTS_INSTI_C
+           INTO :lv_exists;
+             IF GET_EXISTS_INSTI_C%FOUND  THEN
+                :lv_exists := 'Y';
+             ELSE
+			    :lv_exists := 'N';
+             END IF;
+
+          CLOSE GET_EXISTS_INSTI_C;
+		  
+        END;
+      END-EXEC;
+      POSTORA;
+
+	  if ( *lv_exists == 'N' )
+	  {
+        tmstrcpy(vErrMsg, TM_NLS_Get("X","Institution does not exist."));
+	    return;
+      }
+	  
+	  /* VALIDATING TERM */
+	  EXEC SQL
+      EXECUTE
+        DECLARE 
+           CURSOR GET_EXISTS_TERM_C IS
+              SELECT 'Y'
+                FROM STVTERM
+               WHERE STVTERM_CODE =  :lvTerm;
+		   
+        BEGIN
+           OPEN GET_EXISTS_TERM_C;
+          FETCH GET_EXISTS_TERM_C
+           INTO :lv_exists;
+             IF GET_EXISTS_TERM_C%FOUND  THEN
+                :lv_exists := 'Y';
+             ELSE
+			    :lv_exists := 'N';
+             END IF;
+
+          CLOSE GET_EXISTS_TERM_C;
+		  
+        END;
+      END-EXEC;
+      POSTORA;	  
+	  
+	  if ( *lv_exists == 'N' )
+	  {
+        tmstrcpy(vErrMsg, TM_NLS_Get("X","Term does not exist."));
+	    return;
+      }	  
+
+	  /* VALIDATING LEVEL */
+	  EXEC SQL
+      EXECUTE
+        DECLARE 
+           CURSOR GET_EXISTS_LEVEL_C IS
+              SELECT 'X'
+                FROM STVLEVL
+               WHERE STVLEVL_CODE = :lvLevel;
+		   
+        BEGIN
+           OPEN GET_EXISTS_LEVEL_C;
+          FETCH GET_EXISTS_LEVEL_C
+           INTO :lv_exists;
+             IF GET_EXISTS_LEVEL_C%FOUND  THEN
+                :lv_exists := 'Y';
+             ELSE
+			    :lv_exists := 'N';
+             END IF;
+
+          CLOSE GET_EXISTS_LEVEL_C;
+		  
+        END;
+      END-EXEC;
+      POSTORA;	  
+	  
+	  if ( *lv_exists == 'N' )
+	  {
+        tmstrcpy(vErrMsg, TM_NLS_Get("X","Level does not exist."));
+	    return;
+      }	
+
+      /* VALIDATING SUBJECT AND COURSE */   
+	  EXEC SQL
+      EXECUTE
+	    DECLARE 	  
+           CURSOR GET_EXISTS_SUBJECT_C IS
+              SELECT 'X' 
+                FROM SCBCRSE
+               WHERE SCBCRSE_SUBJ_CODE = :lvSubject      
+                 AND SCBCRSE_CRSE_NUMB = :lvCrseNumb			   
+                 AND SCBCRSE_EFF_TERM  = ( SELECT MAX(SCBCRSE_EFF_TERM)
+                                             FROM SCBCRSE
+                                            WHERE SCBCRSE_SUBJ_CODE =  :lvSubject  
+                                              AND SCBCRSE_CRSE_NUMB = :lvCrseNumb                                            
+                                              AND SCBCRSE_EFF_TERM  <= :lvTerm
+									     );		                             			  		 
+		   
+        BEGIN
+           OPEN GET_EXISTS_SUBJECT_C;
+          FETCH GET_EXISTS_SUBJECT_C
+           INTO :lv_exists;
+             IF GET_EXISTS_SUBJECT_C%FOUND  THEN
+                :lv_exists := 'Y';
+             ELSE
+			    :lv_exists := 'N';
+             END IF;
+
+          CLOSE GET_EXISTS_SUBJECT_C;
+		  
+        END;
+      END-EXEC;
+      POSTORA;
+	  
+	  if ( *lv_exists == 'N' )
+	  {
+        tmstrcpy(vErrMsg, TM_NLS_Get("X","Subject or Course does not exist."));
+	    return;
+      }	  
+	    
+      /* VALIDATING GRADE */   
+	  EXEC SQL
+      EXECUTE
+	    DECLARE 	  
+           CURSOR GET_EXISTS_GRADE_C IS
+              SELECT 'X'
+                FROM SHRGRDE t1
+               WHERE t1.SHRGRDE_CODE      = :lvGrdeCode
+                 AND t1.SHRGRDE_LEVL_CODE IN ( SELECT SCRLEVL_LEVL_CODE
+                                                 FROM SCRLEVL 
+                                                WHERE SCRLEVL_SUBJ_CODE =  :lvSubject
+                                                  AND SCRLEVL_CRSE_NUMB =  :lvCrseNumb
+                                                  AND SCRLEVL_LEVL_CODE =  :lvLevel
+                                                  AND SCRLEVL_EFF_TERM  = ( SELECT MAX(SCRLEVL_EFF_TERM)
+                                                                              FROM SCRLEVL
+                                                                              WHERE SCRLEVL_SUBJ_CODE =  :lvSubject
+                                                                                AND SCRLEVL_CRSE_NUMB =  :lvCrseNumb
+                                                                                AND SCRLEVL_LEVL_CODE =  :lvLevel
+                                                                                AND SCRLEVL_EFF_TERM <=  :lvTerm
+                                                                           )
+                                             )
+                 AND EXISTS ( SELECT 'X'
+                                FROM SHRGRDO
+                               WHERE SHRGRDO_LEVL_CODE = t1.SHRGRDE_LEVL_CODE
+                                 AND SHRGRDO_GRDE_CODE = t1.SHRGRDE_CODE
+                                 AND SHRGRDO_GMOD_CODE = :lvGModCode
+                            )
+                 AND t1.SHRGRDE_TERM_CODE_EFFECTIVE = ( SELECT MAX(SHRGRDE_TERM_CODE_EFFECTIVE)
+                                                          FROM SHRGRDE
+                                                         WHERE SHRGRDE_TERM_CODE_EFFECTIVE <= :lvTerm
+  														   AND SHRGRDE_CODE                 = t1.SHRGRDE_CODE
+                                                           AND SHRGRDE_LEVL_CODE            = t1.SHRGRDE_LEVL_CODE
+                                                      )
+                 AND SHRGRDE_GRDE_STATUS_IND = 'A';
+		   
+        BEGIN
+           OPEN GET_EXISTS_GRADE_C;
+          FETCH GET_EXISTS_GRADE_C
+           INTO :lv_exists;
+             IF GET_EXISTS_GRADE_C%FOUND  THEN
+                :lv_exists := 'Y';
+             ELSE
+			    :lv_exists := 'N';
+             END IF;
+
+          CLOSE GET_EXISTS_GRADE_C;
+		  
+        END;
+      END-EXEC;
+      POSTORA;
+	  
+	  if ( *lv_exists == 'N' )
+	  {
+        tmstrcpy(vErrMsg, TM_NLS_Get("X","Grading Mode or Grade does not exist."));
+	    return;
+      } 
+	  
+	                               
+}
+
+/******************************************************************************/
+/*                   Routine to Read Lines of the File                        */
+/******************************************************************************/
+
+static int mc_ReadFileLines(void)
+{
+
+  int i, j, k;
+  char separador;
+  
+  TMCHAR MiniCad[21];
+  EXEC SQL BEGIN DECLARE SECTION;
+      static TMCHAR   lv_msg[100] = {0};
+  EXEC SQL END DECLARE SECTION;
+
+  i = j = k = 0;
+  tmstrcpy( vRecRead,    _TMC("0") );
+  tmstrcpy( vRecIgnored, _TMC("0") );
+
+
+  #ifdef SCT_DEBUG
+     tmprintf( &tmBundle, TM_NLS_Get("x", "Executing mc_ReadFileLines.\n"));
+  #endif
+
+
+  tmstrcpy(lv_msg, TM_NLS_Get("x","(Define in GTVSDAX form the value to the file separator character for DELIMITADO)"));
+  EXEC SQL
+     EXECUTE
+       BEGIN
+           :vCharSeparator := gokeacc.f_getgtvsdaxextcode ('DELIMITADO', 'UTM002'); /*BIEN*/
+           IF (:vCharSeparator IS NULL or :vCharSeparator = 'UPDATEME') THEN
+             :vCharSeparator := :lv_msg;
+           ELSE
+             :vDummy := LENGTH(:vCharSeparator);
+           END IF;
+       END;
+     END-EXEC;
+  POSTORA;
+
+  if ( !tmstrcmp( vCharSeparator, lv_msg ) )
+  {
+    tmprintf(&tmBundle, _TMC("{0}\n"), vCharSeparator );
+    prtstr( lv_msg );
+  }
+  else
+  {
+     separador = *vCharSeparator;
+     
+     do {
+           tmstrcpy(vFileLine,_TMC(""));
+           tmfgets(vFileLine, 410, vFile);
+ 
+           if ( tmstrcmp( vFileLine, _TMC("") ) )
+           {
+             add( vRecRead, vRecRead, _TMC("1") );
+			 tmstrcpy( vErrMsg, _TMC(""));
+			 tmstrcpy( vErrorCode, _TMC("") ); 
+			 
+			 tmstrcpy( lvID,       _TMC("") );
+             tmstrcpy( lvInsti,    _TMC("") );
+			 tmstrcpy( lvTerm,     _TMC("") );
+             tmstrcpy( lvFolio,    _TMC("") );
+			 tmstrcpy( lvLevel,    _TMC("") );
+             tmstrcpy( lvSubject,  _TMC("") );
+			 tmstrcpy( lvCrseNumb, _TMC("") );
+             tmstrcpy( lvGModCode, _TMC("") );
+			 tmstrcpy( lvGrdeCode, _TMC("") );
+			 
+
+	     #ifdef SCT_DEBUG
+                tmprintf(&tmBundle,  TM_NLS_Get("x","DEBUG: Line of the file: [{0}]\n"), vFileLine );
+             #endif
+			 
+			 tmstrcpy( lvID,       getField(1) );
+             tmstrcpy( lvInsti,    getField(2) );
+             tmstrcpy( lvTerm,     getField(3) );
+             tmstrcpy( lvFolio,    getField(4) );
+             tmstrcpy( lvLevel,    getField(5) );
+             tmstrcpy( lvSubject,  getField(6) );
+             tmstrcpy( lvCrseNumb, getField(7) );
+             tmstrcpy( lvGModCode, getField(8) );
+			 tmstrcpy( lvGrdeCode, getField(9) );
+
+	     #ifdef SCT_DEBUG
+		tmprintf(&tmBundle,  TM_NLS_Get("x","DEBUG: lvID       -> {0} \n"),lvID);      
+		tmprintf(&tmBundle,  TM_NLS_Get("x","DEBUG: lvInsti    -> {0} \n"),lvInsti);
+		tmprintf(&tmBundle,  TM_NLS_Get("x","DEBUG: lvTerm     -> {0} \n"),lvTerm);    
+		tmprintf(&tmBundle,  TM_NLS_Get("x","DEBUG: lvFolio    -> {0} \n"),lvFolio);   
+		tmprintf(&tmBundle,  TM_NLS_Get("x","DEBUG: lvLevel    -> {0} \n"),lvLevel);  
+		tmprintf(&tmBundle,  TM_NLS_Get("x","DEBUG: lvSubject  -> {0} \n"),lvSubject); 
+		tmprintf(&tmBundle,  TM_NLS_Get("x","DEBUG: lvCrseNumb -> {0} \n"),lvCrseNumb);
+		tmprintf(&tmBundle,  TM_NLS_Get("x","DEBUG: lvGModCode -> {0} \n"),lvGModCode);
+		tmprintf(&tmBundle,  TM_NLS_Get("x","DEBUG: lvGrdeCode -> {0} \n"),lvGrdeCode);
+	     #endif
+		  
+             if ( *lvID && *lvInsti && *lvTerm && *lvFolio && *lvLevel && *lvSubject && *lvCrseNumb && *lvGModCode && *lvGrdeCode )
+             {			 
+			    /* VALIDATING DATA */ 
+				mc_ValidaData();
+			  
+				if ( tmstrcmp( vErrMsg, _TMC("") ) )
+				{ 
+				    tmstrcpy( vErrorCode, _TMC("E") ); 
+				}
+				else
+				{
+				    tmstrcpy(vErrorCode, _TMC("S") );
+					tmstrcpy(vErrMsg, TM_NLS_Get("X","Processed equivalence"));									
+				}	
+				
+               /* SAVED IN TEMPORARY TABLE */ 
+			    EXEC SQL
+                EXECUTE
+                     BEGIN                         
+                         INSERT INTO SZTVEEQ( SZTVEEQ_PIDM,      /*BIEN*/
+					      SZTVEEQ_ID,
+                                              SZTVEEQ_SBGI_CODE, 
+                                              SZTVEEQ_TERM_CODE, 
+                                              SZTVEEQ_FOLIO,     
+                                              SZTVEEQ_LEVEL_CODE,
+                                              SZTVEEQ_SUBJ_CODE, 
+                                              SZTVEEQ_CRSE_NUMB, 
+					      SZTVEEQ_GMOD_CODE,
+                                              SZTVEEQ_GRDE_CODE, 
+                                              SZTVEEQ_STATUS,    
+                                              SZTVEEQ_ERROR,     
+					      SZTVEEQ_SESSIONID 
+                                            )
+				  VALUES  ( :lvPIDM,
+					    :lvID,
+				      	    :lvInsti,
+					    :lvTerm,
+					    SUBSTR(:lvFolio,1,60),
+					    :lvLevel,
+					    :lvSubject,
+					    :lvCrseNumb,
+					    :lvGModCode,
+					    :lvGrdeCode,
+                                            :vErrorCode,
+                                            :vErrMsg,
+                                            SYS_CONTEXT ('USERENV', 'SESSIONID') 											  									 
+				        );
+                     
+                         COMMIT;                     
+                     
+                     EXCEPTION
+                       WHEN NO_DATA_FOUND THEN
+                          :vErrMsg := G$_NLS.GET('X', 'SQL', 'Exception %01% .', SUBSTR(SQLERRM,1,100));
+                          :vErrorCode := SQLCODE;
+                       WHEN OTHERS THEN
+                          :vErrMsg := G$_NLS.GET('X', 'SQL', 'Exception %01% .', SUBSTR(SQLERRM,1,100));
+                          :vErrorCode := SQLCODE;
+                     END;
+                END-EXEC;
+                POSTORA;
+	           
+             }
+             else
+             {
+               add( vRecIgnored, vRecIgnored, _TMC("1") );
+             }
+             k = 0;
+           }
+        } while ( tmstrcmp( vFileLine, _TMC("") ) );
+		
+  }
+  return 0;
+}
+
+
+/******************************************************************************/
+/*                   Routine to close the file                                */
+/******************************************************************************/
+
+static int  mc_CloseFile( void )
+{
+  tmfclose( vFile );
+  return 0;
+}
+
+/*****************************************************************************/
+/*        Routine to process layout if the parameter was entered.            */
+/*****************************************************************************/
+
+static void mc_ProcessFile( void )
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+    static TMCHAR lv_msg[100]           = {0};
+    static TMCHAR tRecordTypeValue[16]  = {0};
+  EXEC SQL END DECLARE SECTION;
+
+  #ifdef SCT_DEBUG
+     tmprintf(&tmBundle,  TM_NLS_Get("x","Executing function mc_ProcessFile.\n") );
+  #endif
+
+  tmstrcpy(lv_msg, TM_NLS_Get("x","(Define in GTVSDAX form the value to the file path for DATA HOME)"));
+  EXEC SQL
+     EXECUTE
+            DECLARE
+              description   gtvsdax.gtvsdax_internal_code%TYPE;
+
+              CURSOR get_gtvsdax_desc_c(l_internal_code VARCHAR2,
+                                        l_group_code    VARCHAR2) IS
+               SELECT gtvsdax_comments
+                 FROM gtvsdax
+                WHERE gtvsdax_internal_code       = l_internal_code
+                  AND gtvsdax_internal_code_group = l_group_code;
+
+                BEGIN
+
+                     OPEN get_gtvsdax_desc_c('FILE_DIR', 'UTM002');
+                    FETCH get_gtvsdax_desc_c INTO :pvFilePath;
+                    CLOSE get_gtvsdax_desc_c;
+                    IF (:pvFilePath IS NULL or :pvFilePath = 'UPDATEME') THEN
+                        :pvFilePath := :lv_msg;
+                    END IF;
+                END;
+     END-EXEC;
+  POSTORA;
+
+ #ifdef SCT_DEBUG
+    tmprintf(&tmBundle,  TM_NLS_Get("x","DEBUG: UTM002: [{0}]\n"), pvFilePath );
+  #endif
+
+  if ( !tmstrcmp( pvFilePath, lv_msg ) )
+  {
+    tmprintf(&tmBundle, _TMC("{0}\n"),pvFilePath );
+    prtstr( lv_msg );
+  }
+  else
+  {
+     #if OPSYS==OS_UNIX
+        tmsprintf(&tmBundle,  pvFileFullName, _TMC("{0}/{1}"),
+                 pvFilePath,  pvFileName );
+     #else
+        tmsprintf(&tmBundle,  pvFileFullName, _TMC("{0}\\{1}"),
+                 pvFilePath,  pvFileName );
+     #endif
+
+    mc_OpenFile();
+    mc_ReadFileLines();
+    mc_CloseFile();
+
+  }
+}
+
+static void mc_Process_Equivalence(void)
+{
+      #ifdef SCT_DEBUG
+        tmprintf(&tmBundle, TM_NLS_Get("x", "Executing mc_Process_Equivalence.\n"));
+      #endif
+	  	  
+	  tmstrcpy( vErrMsg, _TMC("") ) ;
+	  
+	  
+	  /* GET SEQUENCE OF INSTITUTION OF TRANSFER */
+	  EXEC SQL      		  
+         DECLARE GET_TRIT_SEQ_NO_C CURSOR FOR
+             /*  MKU  Changed    16/Apr/2016  */
+             /*
+             SELECT NVL(MAX(SHRTRIT_SEQ_NO), 0)
+               FROM SHRTRIT
+              WHERE SHRTRIT_PIDM      =  :sztveeq_pidm
+	        AND SHRTRIT_SBGI_CODE =  :sztveeq_sbgi_code;
+	     */   
+	     SELECT NVL(MAX(SHRTRIT_SEQ_NO), 0)
+	       FROM SHRTRIT
+	      WHERE SHRTRIT_PIDM      =  :sztveeq_pidm;
+      POSTORA;
+
+	  EXEC SQL
+	     OPEN GET_TRIT_SEQ_NO_C;
+      POSTORA;
+
+	  EXEC SQL
+         FETCH GET_TRIT_SEQ_NO_C
+          INTO :lv_trit_seq_no:vIndArr[0];
+      POSTORA;
+
+   	  EXEC SQL
+          CLOSE GET_TRIT_SEQ_NO_C;
+      POSTORA;	  
+
+      #ifdef SCT_DEBUG
+         tmprintf(&tmBundle,  TM_NLS_Get("x","    DEBUG: LV_TRIT_SEQ_NO 1: [{0}]\n"), lv_trit_seq_no );
+      #endif		  
+  	  
+	  if ( tmatoi( lv_trit_seq_no ) == 0 )
+	  {
+	       EXEC SQL
+	          SELECT :lv_trit_seq_no + 1 
+			    INTO :lv_trit_seq_no
+			    FROM DUAL;
+           POSTORA;
+		   
+	   #ifdef SCT_DEBUG 
+             tmprintf(&tmBundle,  TM_NLS_Get("x","    DEBUG: LV_TRIT_SEQ_NO 2: [{0}]\n"), lv_trit_seq_no );
+           #endif		  
+		   
+           /* SAVED SEQUENCE OF INSTITUTION OF TRANSFER */
+	       EXEC SQL
+           EXECUTE		   
+             BEGIN
+                BEGIN              
+                      INSERT INTO SHRTRIT ( SHRTRIT_PIDM, /*BIEN*/
+					    SHRTRIT_SEQ_NO,
+						SHRTRIT_SBGI_CODE,
+						SHRTRIT_SBGI_DESC,
+						SHRTRIT_OFFICIAL_TRANS_IND,
+						SHRTRIT_TRANS_DATE_RCVD,
+						SHRTRIT_ACTIVITY_DATE
+						      )
+				   VALUES ( :sztveeq_pidm,
+					    :lv_trit_seq_no,
+					    :sztveeq_sbgi_code,
+						NULL,
+						NULL,
+						SYSDATE,
+						SYSDATE									
+                                          );						   
+           
+		        EXCEPTION WHEN OTHERS THEN      
+		           :vErrMsg := G$_NLS.GET('X', 'SQL', 'Exception %01% .', SUBSTR(SQLERRM,1,100));              
+                END ;		  
+             END;
+           END-EXEC;
+           POSTORA;	  
+      }
+
+	  
+	  if ( tmstrcmp( vErrMsg, _TMC("") ) )
+          return;	  
+		  
+      /* GET SEQUENCE OF TRANSFER */
+	  EXEC SQL      		  
+         DECLARE GET_TRAM_SEQ_NO_C CURSOR FOR
+             SELECT NVL(MAX(SHRTRAM_SEQ_NO), 0) 
+               FROM SHRTRAM
+              WHERE SHRTRAM_PIDM        = :sztveeq_pidm
+                AND SHRTRAM_TRIT_SEQ_NO = :lv_trit_seq_no;
+      POSTORA;
+
+	  EXEC SQL
+	     OPEN GET_TRAM_SEQ_NO_C;
+      POSTORA;
+
+	  EXEC SQL
+         FETCH GET_TRAM_SEQ_NO_C
+          INTO :lv_tram_seq_no:vIndArr[0];
+      POSTORA;
+
+   	  EXEC SQL
+          CLOSE GET_TRAM_SEQ_NO_C;
+      POSTORA;	
+
+      #ifdef SCT_DEBUG 
+           tmprintf(&tmBundle,  TM_NLS_Get("x","    DEBUG: LV_TRAM_SEQ_NO 1: [{0}]\n"), lv_tram_seq_no );
+      #endif	 
+	  
+	  if ( tmatoi( lv_tram_seq_no ) == 0 )
+	  {
+
+	  	   EXEC SQL
+	          SELECT :lv_tram_seq_no + 1 
+			    INTO :lv_tram_seq_no
+			    FROM DUAL;
+           POSTORA;
+	       
+		   #ifdef SCT_DEBUG
+             tmprintf(&tmBundle,  TM_NLS_Get("x","    DEBUG: LV_TRAM_SEQ_NO 2: [{0}]\n"), lv_tram_seq_no );
+           #endif	  
+	       
+		   EXEC SQL
+           EXECUTE		   
+             BEGIN	  
+                BEGIN               
+       	              /* SAVED SEQUENCE OF TRANSFER */
+            	      INSERT INTO SHRTRAM ( SHRTRAM_PIDM,              /*BIEN*/                                          
+                                            SHRTRAM_TRIT_SEQ_NO ,                                                       
+                                            SHRTRAM_SEQ_NO,                                                              
+                                            SHRTRAM_LEVL_CODE,                                                       
+                                            SHRTRAM_ATTN_PERIOD,                                                      
+                                            SHRTRAM_TERM_CODE_ENTERED,                                                 
+                                            SHRTRAM_DEGC_CODE,                                                      
+                                            SHRTRAM_TERM_TYPE,                                                          
+                                            SHRTRAM_ACCEPTANCE_DATE,
+									        SHRTRAM_ACTIVITY_DATE,
+									        SHRTRAM_ATTN_BEGIN_DATE,
+									        SHRTRAM_ATTN_END_DATE
+									      ) 
+                                   VALUES ( :sztveeq_pidm,
+			                                :lv_trit_seq_no,
+					                        :lv_tram_seq_no,
+					                        :sztveeq_level_code,
+					                        'Equivalencia',
+					                        :sztveeq_term_code,
+					                        NULL,
+									        NULL,
+									        SYSDATE,
+									        SYSDATE,
+					                        NULL,
+					                        NULL
+									      );        
+                EXCEPTION
+                WHEN OTHERS THEN               
+		           :vErrMsg := G$_NLS.GET('X', 'SQL', 'Exception %01% .', SUBSTR(SQLERRM,1,100));                                      
+                END; 	  
+             END;
+           END-EXEC;
+           POSTORA;	 
+	  }
+	  
+	  if ( tmstrcmp( vErrMsg, _TMC("") ) )
+          return;	
+		  
+      /* GET SEQUENCE COURSE */
+	  EXEC SQL      		  
+         DECLARE GET_TRCR_SEQ_NO_C CURSOR FOR
+             SELECT NVL(MAX(SHRTRCR_SEQ_NO), 0) + 1
+               FROM SHRTRCR
+              WHERE SHRTRCR_PIDM        = :sztveeq_pidm
+                AND SHRTRCR_TRIT_SEQ_NO = :lv_trit_seq_no
+                AND SHRTRCR_TRAM_SEQ_NO = :lv_tram_seq_no;
+      POSTORA;
+
+	  EXEC SQL
+	     OPEN GET_TRCR_SEQ_NO_C;
+      POSTORA;
+
+	  EXEC SQL
+         FETCH GET_TRCR_SEQ_NO_C
+          INTO :lv_trcr_seq_no:vIndArr[0];
+      POSTORA;
+
+   	  EXEC SQL
+          CLOSE GET_TRCR_SEQ_NO_C;
+      POSTORA;	 	  
+
+	  #ifdef SCT_DEBUG
+          tmprintf(&tmBundle,  TM_NLS_Get("x","    DEBUG: LV_TRCR_SEQ_NO: [{0}]\n"), lv_trcr_seq_no );
+      #endif	  
+	  
+      EXEC SQL
+      EXECUTE
+          BEGIN
+         	 BEGIN 
+       	         /* SAVED SEQUENCE OF COURSE */			 
+                 INSERT INTO SHRTRCR ( SHRTRCR_PIDM, /*BIEN*/
+                                       SHRTRCR_TRIT_SEQ_NO,
+                                       SHRTRCR_TRAM_SEQ_NO,
+                                       SHRTRCR_SEQ_NO,
+                                       SHRTRCR_TRANS_COURSE_NAME,
+                                       SHRTRCR_TRANS_COURSE_NUMBERS,
+                                       SHRTRCR_TRANS_CREDIT_HOURS,
+                                       SHRTRCR_TRANS_GRADE,
+                                       SHRTRCR_TRANS_GRADE_MODE,
+                                       SHRTRCR_ACTIVITY_DATE,
+                                       SHRTRCR_LEVL_CODE,
+                                       SHRTRCR_TERM_CODE,
+                                       SHRTRCR_GROUP,
+                                       SHRTRCR_ART_IND,
+                                       SHRTRCR_PROGRAM,
+                                       SHRTRCR_GROUP_PRIMARY_IND,
+                                       SHRTRCR_DUPLICATE,
+                                       SHRTRCR_TCRSE_TITLE                        
+                                      )
+                              VALUES ( :sztveeq_pidm,
+                                       :lv_trit_seq_no,
+                                       :lv_tram_seq_no,
+                                       :lv_trcr_seq_no,
+                                       :sztveeq_folio,
+                                       NULL,
+                                       NULL,                                  
+                                       NULL,
+                                       NULL,
+                                       SYSDATE,
+                                       :sztveeq_level_code,
+                                       :sztveeq_term_code,
+                                       NULL,
+					   NULL,
+					   NULL,
+					   NULL,
+					   NULL,
+					   NULL                                                          
+                                     );
+        
+           EXCEPTION
+           WHEN OTHERS THEN               
+		      :vErrMsg := G$_NLS.GET('X', 'SQL', 'Exception %01% .', SUBSTR(SQLERRM,1,100)); 
+           END; 	  
+        END;
+      END-EXEC;
+      POSTORA;
+	  
+	  
+	  if ( tmstrcmp( vErrMsg, _TMC("") ) )
+          return;		   
+		 
+      /* GET SEQUENCE OF EQUIVALENT COURSES */
+	  EXEC SQL      		  
+         DECLARE GET_TRCE_SEQ_NO_C CURSOR FOR
+             SELECT NVL(MAX(SHRTRCE_SEQ_NO), 0 ) + 1
+               FROM SHRTRCE
+              WHERE SHRTRCE_PIDM        = :sztveeq_pidm
+                AND SHRTRCE_TRIT_SEQ_NO = :lv_trit_seq_no
+                AND SHRTRCE_TRAM_SEQ_NO = :lv_tram_seq_no
+                and SHRTRCE_TRCR_SEQ_NO = :lv_trcr_seq_no;
+      POSTORA;
+
+	  EXEC SQL
+	     OPEN GET_TRCE_SEQ_NO_C;
+      POSTORA;
+
+	  EXEC SQL
+         FETCH GET_TRCE_SEQ_NO_C
+          INTO :lv_trce_seq_no:vIndArr[0];
+      POSTORA;
+
+   	  EXEC SQL
+          CLOSE GET_TRCE_SEQ_NO_C;		  
+      POSTORA;   
+	  
+	  #ifdef SCT_DEBUG
+          tmprintf(&tmBundle,  TM_NLS_Get("x","    DEBUG: LV_TRCE_SEQ_NO: [{0}]\n"), lv_trce_seq_no );
+      #endif	  
+	  
+      /* GET TITLE OF COURSE*/
+	  EXEC SQL      		  
+         DECLARE GET_HR_LOW_TITLE_C CURSOR FOR
+              SELECT SCBCRSE_CREDIT_HR_LOW, SCBCRSE_TITLE
+                FROM SCBCRSE
+               WHERE SCBCRSE_SUBJ_CODE = :sztveeq_subj_code
+                 AND SCBCRSE_CRSE_NUMB = :sztveeq_crse_numb
+                 AND SCBCRSE_EFF_TERM  = ( SELECT MAX(SCBCRSE_EFF_TERM)
+                                             FROM SCBCRSE
+                                            WHERE SCBCRSE_SUBJ_CODE =  :sztveeq_subj_code
+                                              AND SCBCRSE_CRSE_NUMB =  :sztveeq_crse_numb
+                                              AND SCBCRSE_EFF_TERM  <= :sztveeq_term_code
+                                         );
+      POSTORA;	  
+	  
+	  EXEC SQL
+	     OPEN GET_HR_LOW_TITLE_C;
+      POSTORA;
+
+	  EXEC SQL
+         FETCH GET_HR_LOW_TITLE_C
+          INTO :lv_crse_credit_hr_low:vIndArr[0],
+		       :lv_crse_title:vIndArr[1];
+      POSTORA;
+
+   	  EXEC SQL
+          CLOSE GET_HR_LOW_TITLE_C;		  
+      POSTORA; 	  
+	  
+	  
+      EXEC SQL
+      EXECUTE
+          BEGIN
+         	 BEGIN 
+       	         /* SAVED SEQUENCE OF SHRTRCE */			 
+                 INSERT INTO SHRTRCE ( SHRTRCE_PIDM, /*BIEN*/
+                                       SHRTRCE_TRIT_SEQ_NO,
+                                       SHRTRCE_TRAM_SEQ_NO,
+                                       SHRTRCE_SEQ_NO,
+                                       SHRTRCE_TRCR_SEQ_NO,
+                                       SHRTRCE_TERM_CODE_EFF,
+                                       SHRTRCE_LEVL_CODE,
+                                       SHRTRCE_SUBJ_CODE,
+                                       SHRTRCE_CRSE_NUMB,
+                                       SHRTRCE_CRSE_TITLE,
+                                       SHRTRCE_CREDIT_HOURS,
+                                       SHRTRCE_GRDE_CODE,
+                                       SHRTRCE_GMOD_CODE,
+                                       SHRTRCE_COUNT_IN_GPA_IND,
+                                       SHRTRCE_ACTIVITY_DATE,
+                                       SHRTRCE_REPEAT_COURSE,
+                                       SHRTRCE_REPEAT_SYS
+                                      )
+                              VALUES ( :sztveeq_pidm,
+                                       :lv_trit_seq_no,
+                                       :lv_tram_seq_no,
+				       :lv_trce_seq_no,
+                                       :lv_trcr_seq_no,
+                                       :sztveeq_term_code,
+				       :sztveeq_level_code,
+				       :sztveeq_subj_code,
+				       :sztveeq_crse_numb,
+                                       :lv_crse_title,
+                                       :lv_crse_credit_hr_low,                                  
+                                       :sztveeq_grde_code,
+                                       :sztveeq_gmod_code,
+                                       'Y',
+                                       SYSDATE,
+				       NULL,
+				       NULL
+                                     );
+        
+           EXCEPTION
+           WHEN OTHERS THEN               
+		      :vErrMsg := G$_NLS.GET('X', 'SQL', 'Exception %01% .', SUBSTR(SQLERRM,1,100));  
+           END; 	  
+        END;
+      END-EXEC;
+      POSTORA;	  
+      
+      
+	  
+}
+
+static void mc_MainProcess(void)
+{
+      #ifdef SCT_DEBUG
+        tmprintf(&tmBundle, TM_NLS_Get("x", "Executing mc_MainProcess.\n"));
+      #endif
+	  	  
+      /* PRINTIG DATA */ 
+      EXEC SQL
+      DECLARE SZTVEEQ_C CURSOR FOR
+         SELECT SZTVEEQ_PIDM,    
+                SZTVEEQ_ID,		 
+                SZTVEEQ_SBGI_CODE,  
+                SZTVEEQ_TERM_CODE,  
+                SZTVEEQ_FOLIO,      
+                SZTVEEQ_LEVEL_CODE, 
+                SZTVEEQ_SUBJ_CODE,  
+                SZTVEEQ_CRSE_NUMB,  
+                SZTVEEQ_GMOD_CODE,  
+                SZTVEEQ_GRDE_CODE,  
+                SZTVEEQ_STATUS,    
+				SZTVEEQ_ERROR    				
+           FROM SZTVEEQ
+          WHERE SZTVEEQ_SESSIONID  = SYS_CONTEXT ('USERENV', 'SESSIONID')
+          ORDER BY SZTVEEQ_STATUS, SZTVEEQ_ID; 
+      POSTORA;
+	  
+      EXEC SQL
+        OPEN SZTVEEQ_C;
+      POSTORA;
+	        
+	  tmstrcpy( lv_status_last, _TMC( "X" ) );	  
+	  
+      for( ; ; )
+      {
+         EXEC SQL
+            FETCH SZTVEEQ_C
+              INTO :sztveeq_pidm:vIndArr[0],
+			       :sztveeq_id:vIndArr[1],
+                   :sztveeq_sbgi_code:vIndArr[2],
+                   :sztveeq_term_code:vIndArr[3],
+                   :sztveeq_folio:vIndArr[4],
+                   :sztveeq_level_code:vIndArr[5],
+                   :sztveeq_subj_code:vIndArr[6],
+                   :sztveeq_crse_numb:vIndArr[7],
+                   :sztveeq_gmod_code:vIndArr[8],
+                   :sztveeq_grde_code:vIndArr[9],
+                   :sztveeq_status:vIndArr[10],
+                   :sztveeq_error:vIndArr[11] ;
+         POSTORA;
+
+         if (NO_ROWS_FOUND)
+            break;
+			
+         add( vRowsRead, vRowsRead, _TMC("1") );
+		 
+         #ifdef SCT_DEBUG 
+		tmprintf(&tmBundle,  _TMC("  sztveeq_pidm       <{0}>\n") ,sztveeq_pidm);      
+		tmprintf(&tmBundle,  _TMC("  sztveeq_id         <{0}>\n") ,sztveeq_id);      			
+		tmprintf(&tmBundle,  _TMC("  sztveeq_sbgi_code  <{0}>\n") ,sztveeq_sbgi_code); 
+		tmprintf(&tmBundle,  _TMC("  sztveeq_term_code  <{0}>\n") ,sztveeq_term_code); 
+		tmprintf(&tmBundle,  _TMC("  sztveeq_folio      <{0}>\n") ,sztveeq_folio);     
+		tmprintf(&tmBundle,  _TMC("  sztveeq_level_code <{0}>\n") ,sztveeq_level_code);
+		tmprintf(&tmBundle,  _TMC("  sztveeq_subj_code  <{0}>\n") ,sztveeq_subj_code); 
+		tmprintf(&tmBundle,  _TMC("  sztveeq_crse_numb  <{0}>\n") ,sztveeq_crse_numb); 
+		tmprintf(&tmBundle,  _TMC("  sztveeq_gmod_code  <{0}>\n") ,sztveeq_gmod_code); 
+		tmprintf(&tmBundle,  _TMC("  sztveeq_grde_code  <{0}>\n") ,sztveeq_grde_code); 
+		tmprintf(&tmBundle,  _TMC("  sztveeq_status     <{0}>\n") ,sztveeq_status);    
+		tmprintf(&tmBundle,  _TMC("  sztveeq_error      <{0}>\n") ,sztveeq_error);     
+         #endif
+
+		
+         if ( *pReportMode == 'U' && *sztveeq_status == 'S' ) 
+		 {
+		    mc_Process_Equivalence();
+			/* IF THERE IS AN ERROR EXIT THE PROCCES */
+		    if ( tmstrcmp( vErrMsg, _TMC("") ))
+			    mc_Bomb( vErrMsg );		
+				
+	     }
+		 		 
+        if ( tmstrcmp( sztveeq_status, lv_status_last )  &&  *sztveeq_status == 'E' )		
+		{ 	    
+		    tmstrcpy( lv_message, TM_NLS_Get("X","Students not processed by error") ) ;	
+		    mc_SubHeader(lv_message);
+		}
+		else  if ( tmstrcmp( sztveeq_status, lv_status_last )  &&  *sztveeq_status == 'S' )		
+		{ 	    
+		    tmstrcpy( lv_message, TM_NLS_Get("X","\n Students processed correctly") ) ;	
+		    mc_SubHeader(lv_message);
+		}
+		 
+		 	tmstrcpy( lv_status_last, sztveeq_status ) ;
+		 
+		 /* GET LAST NAME AND FIRST NAME */		 	  
+	     EXEC SQL
+         EXECUTE
+            DECLARE 
+              CURSOR GET_NAME_STDN_C IS
+                 SELECT SUBSTR( SPRIDEN_LAST_NAME || ', ' || SPRIDEN_FIRST_NAME || ' ' || SPRIDEN_MI, 1, 30 ) NAME
+                   FROM SPRIDEN 
+                  WHERE SPRIDEN_PIDM = :sztveeq_pidm
+                    and SPRIDEN_CHANGE_IND is null; 		/*  MKU  Added    16/Apr/2016  */
+		   
+            BEGIN
+                OPEN GET_NAME_STDN_C;
+               FETCH GET_NAME_STDN_C
+                INTO :lv_name_stdn;
+                IF GET_NAME_STDN_C%NOTFOUND  THEN				     
+                     :lv_name_stdn := '-';
+                END IF;
+
+          CLOSE GET_NAME_STDN_C;
+		  
+         END;
+         END-EXEC;
+         POSTORA;
+		 		
+		 mc_Line();
+	   }	
+	   
+      EXEC SQL
+        CLOSE SZTVEEQ_C;
+      POSTORA;	 
+
+      if ( tmatoi( vRowsRead ) == 0 )
+      {
+        prtstr(_TMC("No records were found.\n"));
+      }
+
+}
+
+
+/*****************************************************************************/
+/*                                                                           */
+/* PRINTING ROUTINES                                                         */
+/*                                                                           */
+/*****************************************************************************/
+
+/*****************************************************************************/
+/* mc_GetToday                                                               */
+/*****************************************************************************/
+/* Get the Date & Time of Execution                                          */
+/*****************************************************************************/
+static void mc_GetToday(void)
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+    static TMCHAR tDate[12] = {0};
+    static TMCHAR tTime[12] = {0};
+  EXEC SQL END DECLARE SECTION;
+
+  EXEC SQL
+    SELECT LTRIM(RTRIM(TO_CHAR(SYSDATE, G$_DATE.GET_NLS_DATE_FORMAT))),
+           TO_CHAR(SYSDATE, 'HH24:MI')
+      INTO :tDate:vIndArr[0],
+           :tTime:vIndArr[1]
+      FROM DUAL;
+  POSTORA;
+
+  tmstrcpy(vNow, TM_NLS_Get("X", "Date: "));
+  tmstrcat(vNow, tDate);
+  tmstrcat(vNow, _TMC(", "));
+  tmstrcat(vNow, tTime);
+}
+
+/*****************************************************************************/
+/* mc_Header                                                                 */
+/*****************************************************************************/
+/* Header function                                                           */
+/*****************************************************************************/
+static void mc_Header(void)
+{
+  table(T_BEGIN,2);
+  prtstr(vRptName);
+  newcol();
+  setmode(M_CENTER);
+  prtstr(vInstitution);
+  newcol(); 
+  prtstr(TM_NLS_Get("X", "Page "));
+  prtnum(vPageNum, _TMC("99990"));
+  newcol();
+  newcol();
+  setmode(M_CENTER);
+  prtstr(vRptTitle);
+  newcol();
+  newcol();
+  newcol();
+  setmode(M_CENTER);
+  prtstr(vVersion);
+  newcol();
+  newcol();
+  newcol();
+  setmode(M_CENTER);
+  prtstr(vNow);
+  skipline(2);
+  table(T_END);
+
+  add( vCurrLine, vCurrLine, _TMC( "5" ) );
+}
+
+/*****************************************************************************/
+/* mc_SubHeader                                                              */
+/*****************************************************************************/
+/* SubHeader function                                                        */
+/*****************************************************************************/
+static void mc_SubHeader(TMCHAR *Str)
+{
+  table(T_BEGIN,3);    
+      prtstr(Str);
+      newcol();
+  table(T_END);
+  
+  table(T_BEGIN,4);
+  prtstr(_TMC("ID"));
+  newcol();
+  prtstr(_TMC("NAME"));
+  newcol();
+  prtstr(_TMC("COURSE"));
+  newcol();
+  prtstr(_TMC("MESSAGE"));
+  newcol();  
+  prtstr(_TMC("----------"));
+  newcol();
+  prtstr(_TMC("------------------------------"));
+  newcol();  
+  prtstr(_TMC("----------"));               
+  newcol();  
+  prtstr(_TMC("--------------------------------------------------"));
+  newcol();
+  table(T_END);
+
+  add( vCurrLine, vCurrLine, _TMC( "2" ) );
+}
+
+/*****************************************************************************/
+/* mc_Line                                                                   */
+/*****************************************************************************/
+/* Prints each one of the Students being modified.                           */
+/*****************************************************************************/
+static void mc_Line( void )
+{
+  #ifdef SCT_DEBUG
+    tmprintf(&tmBundle, TM_NLS_Get("X", "\nEjecutando mc_Line.\n"));
+  #endif
+
+  add( vCurrLine, vCurrLine, _TMC( "1" ) );
+
+  if ( tmatoi( vCurrLine ) > 60 )
+  {
+    add( vPageNum, vPageNum, _TMC( "1" ) );
+    tmstrcpy( vCurrLine, _TMC("0") );
+    newpage();
+    mc_Header();
+    mc_SubHeader(lv_message);	
+  }
+  
+  /* Table for Identificator */
+  table(T_BEGIN,4);
+  prtstr(sztveeq_id);
+  newcol();
+  prtstr(lv_name_stdn);
+  newcol();    
+  prtstr(tmstrcat( sztveeq_subj_code, sztveeq_crse_numb ) );  
+  newcol();
+  prtstr(sztveeq_error);
+  newcol();
+  table(T_END);
+}
+
+/*****************************************************************************/
+/* mc_ControlReport                                                          */
+/*****************************************************************************/
+/* Print detail record                                                       */
+/*****************************************************************************/
+static void mc_ControlReport(void)
+{
+  #ifdef SCT_DEBUG
+    tmprintf(&tmBundle, TM_NLS_Get( "X", "\nExecuting mc_ControlReport.\n" ) );
+  #endif
+
+  newpage();
+  add( vPageNum, vPageNum, _TMC( "1" ) );
+  mc_Header();
+  setmode(M_CENTER);
+  prtstr(TM_NLS_Get("X", "* * * REPORT CONTROL INFORMATION * * *"));
+  skipline(1);
+  setmode(M_CENTER);
+  tmprintf(&tmBundle,  TM_NLS_Get("X", "{0} (Version: {1} )"), vRptName, vVersion );
+  setmode(M_NORMAL);
+  skipline(1);
+  prtstr( TM_NLS_Get("x", "File Name.............:") );
+  prtstr( pvFileName );
+  newcol();
+  
+  prtstr( TM_NLS_Get("x", "Run Mode .............:") );
+  prtstr( pReportMode );
+  newcol();
+
+  skipline(1);
+
+  prtstr( TM_NLS_Get("X", "Processed Rows .. : ") );
+  prtnum( vRowsRead, _TMC("9,999,990"));
+  newcol();
+
+}
+
+/*****************************************************************************/
+/*                                                                           */
+/* PARAMETERS READING                                                        */
+/*                                                                           */
+/*****************************************************************************/
+
+/*****************************************************************************/
+/* mc_GetTitle                                                               */
+/*****************************************************************************/
+/* Get the report title                                                      */
+/*****************************************************************************/
+static void mc_GetTitle(void)
+{
+  #ifdef SCT_DEBUG
+    tmprintf( &tmBundle, TM_NLS_Get( "X", "Ejecutando GetTitle.\n" ) );
+  #endif
+
+  EXEC SQL
+    SELECT GJBJOBS_TITLE
+      INTO :vRptTitle:vIndArr[0]
+      FROM GJBJOBS
+     WHERE UPPER( GJBJOBS_NAME ) = UPPER( :vRptName );
+  POSTORA;
+
+  mc_ErrMsg( TM_NLS_Get( "X", "GetTitle" ) );
+}
+
+/*****************************************************************************/
+/* mc_GetInstitution                                                         */
+/*****************************************************************************/
+/* Get the institution name for report header                                */
+/*****************************************************************************/
+static void mc_GetInstitution(void)
+{
+  #ifdef SCT_DEBUG
+    tmprintf( &tmBundle, TM_NLS_Get( "X", "Executing GetInstitution.\n" ) );
+  #endif
+
+  EXEC SQL
+    SELECT LTRIM( RTRIM( GUBINST_NAME, ' ' ), ' ' )
+      INTO :vInstitution:vIndArr[0]
+      FROM GUBINST;
+  POSTORA;
+
+  mc_ErrMsg( TM_NLS_Get( "X", "GetInstitution" ) );
+}
+
+/*****************************************************************************/
+/* mc_RetrieveParms                                                          */
+//*****************************************************************************/
+/* If running process from command line, prompt for Parameters. Otherwise    */
+/* get Parameters from the GJBPRUN Table.                                    */
+/*****************************************************************************/
+static void mc_RetrieveParms(void)
+{
+  int i, vFound;
+  EXEC SQL BEGIN DECLARE SECTION;
+    static TMCHAR   lv_msg[100] = {0};
+  EXEC SQL END DECLARE SECTION;
+
+  #ifdef SCT_DEBUG
+    tmprintf(&tmBundle, TM_NLS_Get("X", "Executing mc_RetrieveParms.\n"));
+  #endif
+
+  /* ========================================================================== */
+
+  if ( *vRptOneUpNo ) tmstrcpy( pvFileName, mc_SelParms( 1, _TMC("") ) );
+  else
+    input( pvFileName, TM_NLS_Get("x", "\nEnter file name and extension: "), 30, ALPHA );
+
+
+  /* ========================================================================== */  
+  if ( *vRptOneUpNo ) tmstrcpy( pReportMode, mc_SelParms( 2, _TMC("") ) );
+  else
+    input( pReportMode, TM_NLS_Get("X","\nRun Mode: Enter (A) for audit mode, (U) for update mode:"), 1, ALPHA );
+
+  if( !*pReportMode )
+    mc_Bomb( TM_NLS_Get("x","Run Mode required parameter is missing.") );
+
+  if ( *pReportMode == 'u' )
+    tmstrcpy( pReportMode, _TMC("U") );
+  else if ( *pReportMode == 'a' )
+    tmstrcpy( pReportMode, _TMC("A") );
+
+  if ( ( *pReportMode != 'U' ) && ( *pReportMode != 'A' ) )
+    mc_Bomb( TM_NLS_Get("X","Run Mode must be [A]udit or [U]pdate."));
+
+  /* ========================================================================== */
+
+  if ( *vRptOneUpNo )
+  {
+    EXEC SQL
+      DELETE GJBPRUN
+       WHERE UPPER( GJBPRUN_JOB ) = UPPER( :vRptName )
+         AND GJBPRUN_ONE_UP_NO    = TO_NUMBER( :vRptOneUpNo );
+    POSTORA;
+
+    mc_ErrMsg( TM_NLS_Get( "X", "RetreiveParms" ) );
+  }
+
+}
+
+/*****************************************************************************/
+/* mc_CheckParms                                                             */
+/*****************************************************************************/
+/* Verifies that the entered Parameters are valid.                           */
+/*****************************************************************************/
+static void mc_CheckParms(void)
+{
+  #ifdef SCT_DEBUG
+    tmprintf(&tmBundle, TM_NLS_Get("X", "Executing mc_CheckParms.\n"));
+  #endif
+
+  if ( *pvFileName )
+  {
+    *vDummy = '\0';
+
+    EXEC SQL
+      SELECT UPPER(substr(:pvFileName,1,4))
+        INTO :vDummy:vIndArr[0]
+        FROM DUAL;
+    POSTORA;
+
+	if( tmstrcmp( vDummy, _TMC("TRNS") ) )	
+       mc_Bomb( TM_NLS_Get("X", "The file name must begin with TRNS or trns.") );
+
+  }
+
+  if ( *pReportMode )
+  {
+    EXEC SQL
+      SELECT UPPER( :pReportMode )
+        INTO :pReportMode:vIndArr[0]
+        FROM DUAL;
+    POSTORA;
+
+	if ( ( *pReportMode != 'U' ) && ( *pReportMode != 'A' ) )	
+        mc_Bomb( TM_NLS_Get("X","Run Mode must be A or U."));
+  }
+}
+
+/*****************************************************************************/
+/* mc_SelParms                                                               */
+/*****************************************************************************/
+/* Retrieve parameters from job submission                                   */
+/*****************************************************************************/
+static TMCHAR *mc_SelParms(int PnumIn, TMCHAR *DelimiterIn)
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+    static int    Pnum             = 0;
+    static TMCHAR Pval[31]         = {0};
+    static TMCHAR ReturnValue[501] = {0};
+  EXEC SQL END DECLARE SECTION;
+
+  #ifdef SCT_DEBUG
+    tmprintf( &tmBundle, TM_NLS_Get("X", "Executing mc_SelParms.\n"));
+  #endif
+
+  Pnum = PnumIn;
+  tmstrcpy( Pval, _TMC("") );
+  tmstrcpy( ReturnValue, _TMC("") );
+
+  EXEC SQL DECLARE PruCurs CURSOR FOR
+    SELECT GJBPRUN_VALUE
+      FROM GJBPRUN
+     WHERE GJBPRUN_ONE_UP_NO           = TO_NUMBER( :vRptOneUpNo )
+       AND UPPER( GJBPRUN_JOB )        = UPPER( :vRptName )
+       AND TO_NUMBER( GJBPRUN_NUMBER ) = :Pnum
+     ORDER BY GJBPRUN_VALUE;
+
+  EXEC SQL
+    OPEN PruCurs;
+  POSTORA;
+
+  mc_ErrMsg( TM_NLS_Get( "X", "mc_SelParms" ) );
+
+  for( ; ; )
+  {
+    EXEC SQL WHENEVER NOTFOUND DO break;
+    EXEC SQL FETCH PruCurs INTO :Pval:vIndArr[0]; POSTORA;
+    mc_ErrMsg( TM_NLS_Get( "X", "mc_SelParms" ) );
+    EXEC SQL WHENEVER NOTFOUND CONTINUE;
+
+    if ( *Pval )
+      tmstrcat( ReturnValue, DelimiterIn );
+    tmstrcat( ReturnValue, Pval );
+  }
+
+  EXEC SQL CLOSE PruCurs; POSTORA;
+
+  return ReturnValue;
+}
+
+/***************************************************************************** /
+/*                                                                           * /
+/* ERROR HANDLING                                                            * /
+/*                                                                           * /
+/***************************************************************************** /
+
+/*****************************************************************************/
+/* mc_ValidateOneUpNo                                                        */
+/*****************************************************************************/
+/* Validate the job sequence number                                          */
+/*****************************************************************************/
+static void mc_ValidateOneUpNo(void)
+{
+  #ifdef SCT_DEBUG
+    tmprintf(&tmBundle,  TM_NLS_Get("X", "Ejecutando mc_ValidateOneUpNo.\n") );
+  #endif
+
+  EXEC SQL DECLARE PrunCur CURSOR FOR
+    SELECT 'Y'
+      FROM GJBPRUN
+     WHERE UPPER( GJBPRUN_JOB ) = UPPER( :vRptName )
+       AND GJBPRUN_ONE_UP_NO    = TO_NUMBER( :vRptOneUpNo );
+  EXEC SQL OPEN PrunCur; POSTORA;
+
+  EXEC SQL
+    FETCH PrunCur
+     INTO :vDummy :vIndArr[0];
+  POSTORA;
+
+  mc_ErrMsg( TM_NLS_Get("X", "mc_ValidateOneUpNo") );
+
+  if ( NO_ROWS_FOUND )
+    mc_ErrMsg( TM_NLS_Get("X", "Invalid Sequence Number") );
+}
+
+/*****************************************************************************/
+/* mc_ErrMsg                                                                 */
+/*****************************************************************************/
+/* Output errors to report control page                                      */
+/*****************************************************************************/
+static void mc_ErrMsg(TMCHAR *StringIn)
+{
+  if( ( sqlca.sqlcode < 0 ) || ( !tmstrcmp( StringIn, TM_NLS_Get("X", "Invalid Sequence Number" ) ) ) )
+  {
+    sqlglm( gMsgBuf, &gBufSize, &gMsgLen );
+    gMsgBuf[gMsgLen] = '\0';
+    tmprintf( &tmBundle,  _TMC( "\n\n\n\n" ) );
+    if( tmstrcmp( StringIn, TM_NLS_Get( "X", "Invalid Sequence Number" ) ) == 0 )
+      tmprintf( &tmBundle,  TM_NLS_Get( "X", "Error: {0}\n" ), StringIn );
+    else
+      tmprintf( &tmBundle,  TM_NLS_Get( "X", " Error executing function {0}.\n" ), StringIn );
+    mc_Bomb( gMsgBuf );
+  }
+  else
+    return;
+}
+
+/*****************************************************************************/
+/* mc_Bomb                                                                   */
+/*****************************************************************************/
+/* Process failed, rollback transactions and release cursors                 */
+/*****************************************************************************/
+static void mc_Bomb ( TMCHAR *Str )
+{
+  #ifdef SCT_DEBUG
+    tmprintf(&tmBundle, TM_NLS_Get( "X", "Executing mc_Bomb.\n" ) );
+  #endif
+
+  tmprintf( &tmBundle, TM_NLS_Get("X", "AUTOMATIC TERMINATION CONDITION.  PROGRAM ABORTED.\n" ) );
+  tmprintf( &tmBundle, TM_NLS_Get("X", "Message is --> |{0}|\n" ), Str );
+  mc_RollbackRelease();
+  /* DELETING TEMPORARY TABLE */	
+/*
+    EXEC SQL
+       DELETE SZTVEEQ
+        WHERE SZTVEEQ_SESSIONID = SYS_CONTEXT ('USERENV', 'SESSIONID');
+    POSTORA;
+*/
+
+    EXEC SQL
+         COMMIT;
+    POSTORA;
+  exit2os( EXIT_FAILURE );
+}
+
+/*****************************************************************************/
+/* mc_RollbackRelease                                                        */
+/*****************************************************************************/
+/* Rollback transactions and release cursors                                 */
+/*****************************************************************************/
+static void mc_RollbackRelease(void)
+{
+  #ifdef SCT_DEBUG
+    tmprintf( &tmBundle, TM_NLS_Get("X", "Executing RollbackRelease.\n" ) );
+  #endif
+
+  EXEC SQL ROLLBACK WORK RELEASE; POSTORA;
+}
+
+/******************************************************************************/
+/*                                                                            */
+/* GLOBAL STRING INITIALIZATION                                               */
+/*                                                                            */
+/******************************************************************************/
+/*TMCI18N BEGIN GLOBAL STRING INITIALIZATION*/
+#ifndef ORA_PROC
+  void tmInitGlobS_szptrns(void)
+  {
+    TMCHARRYT_GLOB_INIT(vRowsRead);
+    TMCHARRYT_GLOB_INIT(vPageNum);
+    TMCHARRYT_GLOB_INIT(vCurrLine);
+	
+	TMCHARRYT_GLOB_INIT(vRecRead);
+    TMCHARRYT_GLOB_INIT(vRecIgnored);
+		
+ 
+  #ifdef _DEBUG
+  puts("*** Initialisation tmInitGlobS_szptrns OK ***\n");
+  #endif
+
+  }
+#endif
+/*TMCI18N END GLOBAL STRING INITIALIZATION*/
+
+/*****************************************************************************/
+/* THE END                                                                   */
+/*****************************************************************************/
+

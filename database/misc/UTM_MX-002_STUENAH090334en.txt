@@ -1,0 +1,534 @@
+Ellucian
+Latin America ModCenter
+
+MODULO :  Alumnos
+MOD:      UTM_MX-002_STUENAH090334en - Mod Mejoras a Asistencia, Calificaciones e Historia Academica. Upgrade a Banner 9
+VERSION:  9.3.34
+
+
+OBJETOS :  
+	-- Paquetes de Base de Datos --
+	 szkutil.sql
+	 szkuti1.sql
+	 szkgchg.sql
+	 szkgch1.sql
+	 szkrols.sql
+	 szkrol1.sql
+	 szhkegr1.sql
+	 szpmrks.sql
+	 szpmrk1.sql
+	 gokutls.sql
+	 gokutl1.sql
+	 szksecg.sql
+	 szksec1.sql
+
+	-- Vistas --
+	szvvabj.sql
+	szvabxt.sql
+
+	--Scripts--
+	
+	utm_acl_01.sql
+	gtvsdaxi_002.sql
+
+	-- Tablas --
+	szbschm_090334_00.sql
+	szbschm_090334_01.sql
+	szbschm_090334_02.sql
+	szbschm_090334_03.sql
+	szbschm_090334_exists.sql
+
+	szraatr_090334_00.sql
+	szraatr_090334_01.sql
+	szraatr_090334_02.sql
+	szraatr_090334_03.sql
+	szraatr_090334_exists.sql
+
+	szratrk_090334_00.sql
+	szratrk_090334_01.sql
+	szratrk_090334_02.sql
+	szratrk_090334_03.sql
+	szratrk_090334_exists.sql
+
+	szrcrns_090334_00.sql
+	szrcrns_090334_01.sql
+	szrcrns_090334_02.sql
+	szrcrns_090334_03.sql
+	szrcrns_090334_exists.sql
+
+	szreqiv_090334_00.sql
+	szreqiv_090334_01.sql
+	szreqiv_090334_02.sql
+	szreqiv_090334_03.sql
+	szreqiv_090334_exists.sql
+
+	szrgchg_090334_00.sql
+	szrgchg_090334_01.sql
+	szrgchg_090334_02.sql
+	szrgchg_090334_03.sql
+	szrgchg_090334_exists.sql
+
+	szrlfda_090334_00.sql
+	szrlfda_090334_01.sql
+	szrlfda_090334_02.sql
+	szrlfda_090334_03.sql
+	szrlfda_090334_exists.sql
+
+	szrmrks_090334_00.sql
+	szrmrks_090334_01.sql
+	szrmrks_090334_02.sql
+	szrmrks_090334_03.sql
+	szrmrks_090334_exists.sql
+
+	szrsatr_090334_00.sql
+	szrsatr_090334_01.sql
+	szrsatr_090334_02.sql
+	szrsatr_090334_03.sql
+	szrsatr_090334_exists.sql
+
+	szrschm_090334_00.sql
+	szrschm_090334_01.sql
+	szrschm_090334_02.sql
+	szrschm_090334_03.sql
+	szrschm_090334_exists.sql
+
+	szvabjr_090334_00.sql
+	szvabjr_090334_01.sql
+	szvabjr_090334_02.sql
+	szvabjr_090334_03.sql
+	szvabjr_090334_exists.sql
+
+	szvacat_090334_00.sql
+	szvacat_090334_01.sql
+	szvacat_090334_02.sql
+	szvacat_090334_03.sql
+	szvacat_090334_exists.sql
+	
+'''
+
+	sztlsch_083102_00.sql
+	sztlsch_083102_01.sql
+	sztlsch_083102_02.sql
+	sztlsch_083102_03.sql
+	sztlsch_083102_exists.sql
+	
+	sztvagr_083102_00.sql
+	sztvagr_083102_01.sql
+	sztvagr_083102_02.sql
+	sztvagr_083102_03.sql
+	sztvagr_083102_exist.sql
+
+	sztveeq_083102_00.sql
+	sztveeq_083102_01.sql
+	sztveeq_083102_02.sql
+	sztveeq_083102_03.sql
+	sztveeq_083102_exist.sql
+
+	sztvsch_083102_00.sql
+	sztvsch_083102_01.sql
+	sztvsch_083102_02.sql
+	sztvsch_083102_03.sql
+	sztvsch_083102_exist.sql
+
+	szrabsc_083102_00.sql
+	szrabsc_083102_01.sql
+	szrabsc_083102_02.sql
+	szrabsc_083102_03.sql
+	szrabsc_083102_exists.sql
+
+	szrstcr_083102_00.sql
+	szrstcr_083102_01.sql
+	szrstcr_083102_02.sql
+	szrstcr_083102_03.sql
+	szrstcr_083102_exists.sql
+	
+   shrgcom_090334_01.sql
+	shrgcom_alter_script.sql
+
+	-- Triggers --
+	
+	 sz_crn_abscences_transfer.sql
+    sz_fgrde_entry_upd.sql
+	 sztstcr_01.sql
+	 sztstcr.sql
+	 sztmrks.sql
+	 sotsatr.sql
+	 sotatrk.sql
+
+	-- Scripts --
+	gvrldil_090334_mod002_ins.sql
+	gvrldil_090334_mod002_upd.sql
+	szaabjr_090334_objs.sql
+	szaabxt_090334_objs.sql
+	szaandl_090334_objs.sql
+	szaeqiv_090334_objs.sql
+	szaftop_090334_objs.sql
+	szagsma_090334_objs.sql
+	szalfda_090334_objs.sql
+	szamrks_090334_objs.sql
+	szaschc_090334_objs.sql
+	szaschm_090334_objs.sql
+	szvabjr_090334_objs.sql
+	szvsaca_090334_objs.sql
+	utm_install_mod002.sql
+	
+
+	-- Pro*C --
+
+	szpcanp_083102_objs.sql
+	szpcoav_083102_objs.sql
+	szpeqiv_083102_objs.sql
+	szpgchg_083102_objs.sql
+	szproll_083102_objs.sql
+	szptrns_083102_objs.sql
+	szrroll_083102_objs.sql
+	szpamec_083102_objs.sql
+	szpcada_083102_objs.sql
+	szpcasc_083102_objs.sql
+	szpcasd_083102_objs.sql
+	szpcmes_083102_objs.sql
+	szpmrks_083102_objs.sql
+
+	--  Admin Page --
+          java/jar 
+	            net.hedtech.banner.utm-student-mod002-1.0.0.jar
+            
+          
+          java/code
+             utm-student-mod002.zip
+
+	-- Autoservicios 9 --  
+	   java/war
+		   ReportsManagement.war
+         FacultySelfService.war
+	      
+            
+
+FECHA:    Diciembre 01, 2025
+TITULO:   Mod Mejoras a Asistencia, Calificaciones e Historia Academica. Upgrade a Banner 9
+
+Nota: el texto no contiene acentos intencionalmente.
+
+
+********************************************************************************************
+******************************* I M P O R T A N T E ****************************************
+
+Este paquete incluye despliegues en Páginas Administrativas, Student Self Service y Faculty Self Service
+
+********************************************************************************************
+ATENCION:
+NOTA RELACIONADA A LOS CODIGO ENTREGABLES DE ELLUCIAN Y CONTRASENAS NO CIFRADAS.
+
+        Con el fin de cumplir con los Estandares de Auditoria Federales de USA
+        GAO-09-232G, TODAS los versiones de Ellucian, a partir de Agosto, 2011,
+        no deberan de entregarse con constrasenas de texto no cifrado.
+
+        Esto afecta a los archivos de scripts de compilacion de C y COBOL y
+        scripts generadores de formas para ambientes UNIX y Windows.
+
+        Los scripts de compilacion (C/COBOL/scripts generadores de formas/
+        scripts generadores de reportes) para plataformas soportadas, han sido
+        modificados para incluir variables de ambiente que deberan definirse en
+        su sitio para una compilacion/generacion correcta de los objetos
+        entregados por Ellucian.
+
+        Plataforma UNIX/LINUX, ejecute el siguiente comando:
+
+            export DFLT_BANINST1_PASS=the_value_of_baninst1_password;
+
+        Plataforma Windows, ejecute el siguiente comando:
+
+            SET DFLT_BANINST1_PASS=the_value_of_baninst1_password
+
+        Los scripts de generacion y compilacion entregados esperan que estas
+        variables de ambiente esten presentes en su ambiente, definidas y
+        disponibles para ser utilizadas en el momento apropiado.
+********************************************************************************
+
+SENTENCIAS DE SOLUCION:
+
+1.  Una vez que ha desempaquetado el archivo UTM_MX-002_STUENAH090334en.zip,
+    en su PC, transfiera en modo ASCII todos los objetos que fueron extraidos al nuevo
+    folder UTM_MX-002_STUENAH090334en, a un directorio nuevo o vacio en la
+    computadora en la cual usted ejecuta BANNER. Entonces transfiera todas las
+    formas y/o reportes en modo BINARIO.
+
+2.  Una vez realizadas las instrucciones anteriores, ejecutar el siguiente
+    comando:
+
+     a. Posicionarse en el directorio donde se aplicara el software.
+
+     b. Asegurarse de que las variables LOCAL y ORACLE_SID tengan el valor
+        apropiado para la instancia de la base de datos:
+
+           LOCAL=<database>*
+           ORACLE_SID=<database>*
+
+     c. Ejecutar el siguiente comando, de especificacion de lenguaje:
+
+           export NLS_LANG="LATIN AMERICAN SPANISH_AMERICA.AL32UTF8" <enter>
+
+3.  Para iniciar la instalacion de objetos desde una sesion SQL ejecute el
+    script:
+    
+    3.1. Esta mod utiliza envio de correos electronicos por lo que para poder ejecutar el script utm_acl_01_add.sql se debe estar conectado como SYS o SYSDBA para su correcta ejecucion.
+
+        start utm_install_mod002.sql  [Enter]
+
+        Revisar: utm_install_mod002.log
+
+4. Despliegue el archivo JAR para Admin Pages
+
+   El archivo JAR esta en el directorio principal /java/jar
+
+   Instrucciones de uso:
+
+   a) Conectese al servidor Tomcat.
+
+   b) Posicionese en el directorio donde se encuentra el ambiente de Tomcat.
+
+        cd /u01/app/tomcat/{tomcat_ENVNAME} [Enter]
+
+      donde {tomcat_ENVNAME} es el nombre del directorio del ambiente de Tomcat.
+
+   d) Genere un respaldo del directorio WEBAPPS de Tomcat donde se instalara el
+      JAR.
+
+        cp -r webapps webapps_{YYYYMMDD} [Enter]
+
+      donde {YYYYMMDD} es la fecha en que se genera el respaldo.
+
+   e) Genere un directorio temporal.
+
+        mkdir -p temp_{YYYYMMDD}/war [Enter]
+
+   f) Posicionese en el nuevo directorio.
+
+        cd temp_{YYYYMMDD} [Enter]
+
+   g) Copie el archivo WAR que esta ejecutando Tomcat.
+
+        cp ../webapps/BannerAdmin.ws.war . [Enter]
+
+   h) Posicionese en el directorio WAR creado en los pasos anteriores.
+
+        cd war [Enter]
+
+   i) Descomprima el archivo WAR copiado en el directorio temporal.
+
+        jar xvf ../BannerAdmin.ws.war [Enter]
+
+   j) Copiar el nuevo archivo .JAR, dentro del directorio
+      temp_{YYYYMMDD}/war/WEB-INF/lib
+
+        cp {new_jar_loc} temp_{YYYYMMDD}/war/WEB-INF/lib/. [Enter]
+
+      donde {new_jar_loc} es el nombre del directorio donde esta almacenado el
+      nuevo archivo JAR, y {YYYYMMDD} es la fecha en que se genera el respaldo.
+
+   k) Posicionese en el directorio temp_{YYYYMMDD}/war/WEB-INF/lib
+
+        cd WEB-INF/lib [Enter]
+
+   l) Verifique que el nuevo archivo JAR se haya copiado correctamente.
+
+        ls -ltr [Enter]
+
+   m) Comprima y genere la nueva version del archivo WAR.
+
+        jar -uvf ../BannerAdmin.ws.war WEB-INF/lib [Enter]
+
+   n) Conectese a la cuenta de Tomcat donde esta el servicio, y detenga el
+      servicio de Tomcat.
+
+        su - tomcat [Enter]
+        service {tomcat_ENVNAME} stop [Enter]
+
+   o) Desde el directorio temp_{YYYYMMDD}/ de la cuenta root, copie el nuevo
+      archivo WAR compactado.
+
+        cp -p BannerAdmin.ws.war ../webapps [Enter]
+
+   p) Acepte la solicitud de substituir el archivo WAR ya existente.
+
+   q) Desde la cuenta de Tomcat, inicie el servicio y espere a que termine de
+      iniciarse el mismo.
+
+      service {tomcat_ENVNAME} start [Enter]
+
+
+5.  Para asegurarse que no existan objetos invalidos en la base de datos,
+    invoque SQL*PLUS y compile los objetos ejecutando el procedimiento
+    localizado en el directorio correspondienmte de Banner:
+
+        start gurutlrp.sql  [Enter]
+
+      Revisar: gurutlrp listing
+
+
+PLATAFORMAS UNIX
+----------------
+
+6. Migracion de Objetos.
+
+   Consulte el archivo utm_migr_002.shl, para verificar que los
+   nombres de las rutas sean correctos y asegurarse que la variable de ambiente
+   $BANNER_HOME esta direccionada al directorio apropiado. Entonces proceda a:
+
+   a) La migracion de archivos del modulo correspondiente en el directorio
+      permanente, la cual produce un archivo con el resultado de la migracion,
+      escribiendo:
+
+         sh utm_migr_002.shl > utm_migr_002.log 2>&1 & [Enter]
+
+      Revisar: utm_migr_002.log
+
+   7. Compilacion del ProC.
+
+   El archivo utm_mod002_cmplc.shl ejecuta la compilacion del ProC:
+
+   Ejecuta la instruccion:
+        sh utm_mod002_cmplc.shl > utm_mod002_cmplc.log 2>&1 & [Enter]
+
+   Revisar el log: utm_mod002_cmplc.log     
+
+
+PLATAFORMAS WINDOWS NT
+----------------------
+
+8. Migracion de Objetos.
+
+   Consulte el archivo utm_migr_002.pl para verificar que los
+   nombres de las rutas sean correctos y asegurarse que la siguiente entrada de
+   registro esta direccionada al directorio apropiado:
+
+      HKEY_LOCAL_MACHINE\SOFTWARE\BANNER\BANNER_HOME
+
+   Entonces proceda a:
+
+   a) La migracion de archivos en el directorio permanente,
+      la cual produce un archivo con el resultado de la migracion, escribiendo:
+
+         perl utm_migr_002.pl > utm_migr_002.log 2>&1  [Enter]
+
+      Revisar: utm_migr_002.log    
+
+
+PARA TODAS LAS PLATAFORMAS
+--------------------------
+9.  Despliegue del WAR
+    
+   En esta seccion se describe la manera de instalar los archivos .war 
+   incluidos en este desarrollo. Se tienen contempladas dos opciones: 
+
+      9.1    Remplazar aplicaciones actualmente instaladas
+      9.2    Nuevas aplicaciones       
+   
+   9.1  Remplazar / sustituir las actualmente instaladas
+
+   a. Para realizar este paso, es necesario tener acceso al servidor Tomcat 
+      en donde SSB9 se encuentra instalado.
+   b. Ingrese al directorio $CATALINA_HOME/webapps
+        cd $CATALINA_HOME/webapps
+   c. Respaldar archivos de configuracion, de las aplicaciones ya instaladas, 
+   que se encuentran en la carpeta WEB-INF/classes:
+      
+         - banner_configuration.groovy 
+         - {nombreAplicacion}_configuration.groovy  
+
+   d. Mueva los archivos correspondientes (FacultySelfService.war y ReportsManagement.war) del directorio fuente 
+      al directorio $CATALINA_HOME/webapps:
+
+        mv <source_dir>/{nombreAplicacion}.war $CATALINA_HOME/webapps
+
+   e. Tomcat desplegara los archivos war automaticamente de la siguiente manera: 
+        http://<server_url>/{nombreAplicacion}
+     
+   f. Despues de respaldar los archivos mencionados en el inciso c, es 
+      necesario mover los archivos a sus carpetas correspondientes: 
+      Para los archivos:  
+
+         - banner_configuration.groovy 
+         - {nombreAplicacion}_configuration.groovy
+
+      Mover los archivos a la carpeta $CATALINA_HOME/webapps/WEB-INF/classes:
+
+      mv <source_dir>/banner_configuration.groovy $CATALINA_HOME/
+                        webapps/{nombreAplicacion}/WEB-INF/classes/
+
+      mv <source_dir>/{nombreAplicacion}_configuration.groovy $CATALINA_HOME/
+                        webapps/{nombreAplicacion}/WEB-INF/classes/
+            
+      Finalmente acepte la sobrescritura del archivo en la direccion indicada. 
+
+   9.2  Nueva aplicacion
+   Debe asegurarse de incluir todas las clases jars dependencias del proyecto 
+   a. Para realizar este paso, es necesario tener acceso al servidor Tomcat 
+      en donde SSB9 se encuentra instalado.
+   b. Ingrese al directorio e incorpore el archivo: 
+   
+      - {nombreAplicacion}SelfService_configuration.groovy
+
+      mv <source_dir>/{nombreAplicacion}SelfService_configuration.groovy $CATALINA_HOME/
+                        webapps/WEB-INF/classes/
+      
+      Personalizar el archivo, colocar url correspondiente de la aplicacion, autenticacion 
+      y referenciar Identity provider en uso. 
+   
+   c. Tomar de shared_config el archivo:
+   
+      - banner_configuration.groovy 
+
+      y moverlo a la carpeta $CATALINA_HOME/webapps/WEB-INF/classes:
+
+      mv <source_dir>/banner_configuration.groovy $CATALINA_HOME/
+                        webapps/{nombreAplicacion}/WEB-INF/classes/
+
+      Finalmente aceptar la sobrescritura del archivo en la direccion indicada.
+
+10. Para insertar el registro de la MOD en la tabla de control de versiones.
+   inicie una sesion de SQL*Plus y ejecute el procedimiento:
+
+          start gvrldil_090334_mod002_upd.sql [Enter]
+
+11. Al final de la instalacion es recomendable recompilar todo para que, si hay
+   cualquier objeto invalido, esto pueda ser solucionado. Esto se puede hacer
+   mediante el script gurutlrp.sql.
+
+
+12. Ejecutar los despliegues de los aplicativos, en Páginas Administrativas(jar file) y Faculty Self Service(war files).
+
+
+********************* INFORMACION CONFIDENCIAL DE NEGOCIOS *********************
+
+Banner(R), Colleague(R), Ellucian(R), y Luminis(R) son marcas registradas de
+Ellucian Company L.P. o de sus afiliados y estan registradas en los Estados
+Unidos de America y en otros paises. Ellucian Advance TM, Ellucian Course
+Signals TM, Ellucian Degree Works TM, Ellucian PowerCampus TM, Ellucian
+Recruiter TM, Ellucian SmartCall TM, son marcas registradas de Ellucian Company
+L.P. o de sus afiliados. Otros nombres pueden ser marcas registradas de sus
+respectivos propietarios.
+
+(C) 2024 Ellucian Company L.P. y sus afiliados. La posesion, uso, reproduccion,
+distribucion, despliegue o divulgacion de este material o de la informacion
+contenida no autorizada esta prohibido.
+
+Contiene informacion confidencial y privada de Ellucian y sus subsidiarias. El
+uso de estos materiales esta limitado a los licenciatarios de Ellucian, y esta
+sujeto a los terminos y condiciones de uno o mas acuerdos de licencia suscritos
+entre Ellucian y el licenciatario en cuestion.
+
+Al preparar y proporcionar esta publicacion, Ellucian no ofrece servicios
+legales, contables u otros servicios profesionales similares. Ellucian no
+sostiene que el uso de esta publicacion o del software para la cual se
+proporciona por parte de la institucion garantizara el cumplimiento de leyes
+federales o estatales, reglas o regulaciones aplicables. Cada organizacion
+debera buscar servicios legales, contables y otros similares de proveedores
+compententes seleccionados por la propia institucion.
+
+Preparado Por:  Ellucian
+2003 Edmund Halley Drive, Suite 500
+Reston, Virginia 20191
+United States of America
+
+*************************** FIN DE CUBIERTA DE PAGINA **************************

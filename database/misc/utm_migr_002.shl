@@ -1,0 +1,471 @@
+
+LN='ln -f'
+sct_start_dir=`pwd`
+export MODS_HOME="${BANNER_HOME}/mcla/student"
+
+# AUDIT TRAIL: 8.7 [TECMILE:002.1.0]       MKU 26/OCT/2015
+# AUDIT TRAIL: 8.31.2 [MCLA:002.2.0]       MHI 16/JAN/2025
+
+# Migrate BANNER student for Release 8.3.32 to permanent directories
+#
+# AUDIT TRAIL: 8.7 [TECMILE:002.1.1]       MSO 05/JUL/2016
+# Student directory was changed instead arsys.
+
+# AUDIT TRAIL: 8.31.2 [MCLA:002.1.1]       MHI 16/JAN/2025
+# New migration file created for update to Banner Student 8.31.2
+
+# AUDIT TRAIL END
+#
+#
+# Copy the following files to production directories
+#
+#  all staged forms to student forms directory
+#
+
+#
+# CREATE MODS DIR
+#
+echo .
+echo Creating MODS directory if it does not exist...
+cd ${sct_start_dir}
+if [ ! -d $MODS_HOME ] ; then mkdir -p $MODS_HOME ; fi
+
+#
+# COPY student C
+#
+echo .
+echo Creating Structure and Migrating C Objects...
+#
+cd ${sct_start_dir}
+if [ ! -d $MODS_HOME/c ] ; then mkdir -p $MODS_HOME/c ; fi
+
+cp szpcanp.pc $MODS_HOME/c
+${LN} $MODS_HOME/c/szpcanp.pc $BANNER_HOME/links
+
+cp szpcoav.pc $MODS_HOME/c
+${LN} $MODS_HOME/c/szpcoav.pc $BANNER_HOME/links
+
+cp szpeqiv.pc $MODS_HOME/c
+${LN} $MODS_HOME/c/szpeqiv.pc $BANNER_HOME/links
+
+cp szpgchg.pc $MODS_HOME/c
+${LN} $MODS_HOME/c/szpgchg.pc $BANNER_HOME/links
+
+cp szproll.pc $MODS_HOME/c
+${LN} $MODS_HOME/c/szproll.pc $BANNER_HOME/links
+
+cp szptrns.pc $MODS_HOME/c
+${LN} $MODS_HOME/c/szptrns.pc $BANNER_HOME/links
+
+cp szrroll.pc $MODS_HOME/c
+${LN} $MODS_HOME/c/szrroll.pc $BANNER_HOME/links
+
+cp szpamec.pc $MODS_HOME/c
+${LN} $MODS_HOME/c/szpamec.pc $BANNER_HOME/links
+
+cp szpcada.pc $MODS_HOME/c
+${LN} $MODS_HOME/c/szpcada.pc $BANNER_HOME/links
+
+cp szpcasc.pc $MODS_HOME/c
+${LN} $MODS_HOME/c/szpcasc.pc $BANNER_HOME/links
+
+cp szpcasd.pc $MODS_HOME/c
+${LN} $MODS_HOME/c/szpcasd.pc $BANNER_HOME/links
+
+cp szpcmes.pc $MODS_HOME/c
+${LN} $MODS_HOME/c/szpcmes.pc $BANNER_HOME/links
+
+cp szpmrks.pc $MODS_HOME/c
+${LN} $MODS_HOME/c/szpmrks.pc $BANNER_HOME/links
+
+
+
+#
+# COPY DBPROCS
+#
+echo .
+echo Creating Structure and Migrating DBPROCS Objects...
+#
+cd ${sct_start_dir}
+if [ ! -d $MODS_HOME/dbprocs ] ; then mkdir -p $MODS_HOME/dbprocs ; fi
+cp szkuti1.sql $MODS_HOME/dbprocs
+${LN} $MODS_HOME/dbprocs/szkuti1.sql $BANNER_HOME/links
+cp szkutil.sql $MODS_HOME/dbprocs
+${LN} $MODS_HOME/dbprocs/szkutil.sql $BANNER_HOME/links
+
+cp szkgchg.sql $MODS_HOME/dbprocs
+${LN} $MODS_HOME/dbprocs/szkgchg.sql $BANNER_HOME/links
+cp szkgch1.sql $MODS_HOME/dbprocs
+${LN} $MODS_HOME/dbprocs/szkgch1.sql $BANNER_HOME/links
+
+cp szkrols.sql $MODS_HOME/dbprocs
+${LN} $MODS_HOME/dbprocs/szkrols.sql $BANNER_HOME/links
+cp szkrol1.sql $MODS_HOME/dbprocs
+${LN} $MODS_HOME/dbprocs/szkrol1.sql $BANNER_HOME/links
+
+cp szhkegr1.sql $MODS_HOME/dbprocs
+${LN} $MODS_HOME/dbprocs/szhkegr1.sql $BANNER_HOME/links
+
+cp szpmrks.sql $MODS_HOME/dbprocs
+${LN} $MODS_HOME/dbprocs/szpmrks.sql $BANNER_HOME/links
+cp szpmrk1.sql $MODS_HOME/dbprocs
+${LN} $MODS_HOME/dbprocs/szpmrk1.sql $BANNER_HOME/links
+
+cp gokutls.sql $MODS_HOME/dbprocs
+${LN} $MODS_HOME/dbprocs/gokutls.sql $BANNER_HOME/links
+cp gokutl1.sql $MODS_HOME/dbprocs
+${LN} $MODS_HOME/dbprocs/gokutl1.sql $BANNER_HOME/links
+
+cp szksecg.sql $MODS_HOME/dbprocs
+${LN} $MODS_HOME/dbprocs/szksecg.sql $BANNER_HOME/links
+cp szksec1.sql $MODS_HOME/dbprocs
+${LN} $MODS_HOME/dbprocs/szksec1.sql $BANNER_HOME/links
+#
+#
+echo ... Done Migrating DBPROCS Objects...
+#
+#
+#
+
+# COPY PLUS
+#
+echo .
+echo Creating Structure and Migrating PLUS Objects...
+#
+cd ${sct_start_dir}
+if [ ! -d $MODS_HOME/plus ] ; then mkdir -p $MODS_HOME/plus ; fi
+
+cp gtvsdaxi_002.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/gtvsdaxi_002.sql $BANNER_HOME/links
+
+cp utm_acl_01.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/utm_acl_01.sql $BANNER_HOME/links
+
+cp utm_acl_add_01.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/utm_acl_add_01.sql $BANNER_HOME/links
+
+# Tabla SZBSCHM
+cp szbschm_090334_00.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szbschm_090334_00.sql $BANNER_HOME/links
+cp szbschm_090334_01.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szbschm_090334_01.sql $BANNER_HOME/links
+cp szbschm_090334_02.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szbschm_090334_02.sql $BANNER_HOME/links
+cp szbschm_090334_03.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szbschm_090334_03.sql $BANNER_HOME/links
+cp szbschm_090334_exists.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szbschm_090334_exists.sql $BANNER_HOME/links
+
+# Tabla SZRAATR
+cp szraatr_090334_00.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szraatr_090334_00.sql $BANNER_HOME/links
+cp szraatr_090334_01.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szraatr_090334_01.sql $BANNER_HOME/links
+cp szraatr_090334_02.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szraatr_090334_02.sql $BANNER_HOME/links
+cp szraatr_090334_03.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szraatr_090334_03.sql $BANNER_HOME/links
+cp szraatr_090334_exists.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szraatr_090334_exists.sql $BANNER_HOME/links
+
+# Tabla SZRATRK
+cp szratrk_090334_00.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szratrk_090334_00.sql $BANNER_HOME/links
+cp szratrk_090334_01.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szratrk_090334_01.sql $BANNER_HOME/links
+cp szratrk_090334_02.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szratrk_090334_02.sql $BANNER_HOME/links
+cp szratrk_090334_03.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szratrk_090334_03.sql $BANNER_HOME/links
+cp szratrk_090334_exists.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szratrk_090334_exists.sql $BANNER_HOME/links
+
+# Tabla SZRCRNS
+cp szrcrns_090334_00.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrcrns_090334_00.sql $BANNER_HOME/links
+cp szrcrns_090334_01.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrcrns_090334_01.sql $BANNER_HOME/links
+cp szrcrns_090334_02.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrcrns_090334_02.sql $BANNER_HOME/links
+cp szrcrns_090334_03.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrcrns_090334_03.sql $BANNER_HOME/links
+cp szrcrns_090334_exists.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrcrns_090334_exists.sql $BANNER_HOME/links
+
+# Tabla SZRLFDA
+cp szrlfda_090334_00.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrlfda_090334_00.sql $BANNER_HOME/links
+cp szrlfda_090334_01.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrlfda_090334_01.sql $BANNER_HOME/links
+cp szrlfda_090334_02.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrlfda_090334_02.sql $BANNER_HOME/links
+cp szrlfda_090334_03.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrlfda_090334_03.sql $BANNER_HOME/links
+cp szrlfda_090334_exists.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrlfda_090334_exists.sql $BANNER_HOME/links
+
+# Tabla SZRMRKS
+cp szrmrks_090334_00.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrmrks_090334_00.sql $BANNER_HOME/links
+cp szrmrks_090334_01.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrmrks_090334_01.sql $BANNER_HOME/links
+cp szrmrks_090334_02.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrmrks_090334_02.sql $BANNER_HOME/links
+cp szrmrks_090334_03.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrmrks_090334_03.sql $BANNER_HOME/links
+cp szrmrks_090334_exists.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrmrks_090334_exists.sql $BANNER_HOME/links
+
+# Tabla SZRSATR
+cp szrsatr_090334_00.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrsatr_090334_00.sql $BANNER_HOME/links
+cp szrsatr_090334_01.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrsatr_090334_01.sql $BANNER_HOME/links
+cp szrsatr_090334_02.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrsatr_090334_02.sql $BANNER_HOME/links
+cp szrsatr_090334_03.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrsatr_090334_03.sql $BANNER_HOME/links
+cp szrsatr_090334_exists.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrsatr_090334_exists.sql $BANNER_HOME/links
+
+# Tabla SZRSCHM
+cp szrschm_090334_00.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrschm_090334_00.sql $BANNER_HOME/links
+cp szrschm_090334_01.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrschm_090334_01.sql $BANNER_HOME/links
+cp szrschm_090334_02.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrschm_090334_02.sql $BANNER_HOME/links
+cp szrschm_090334_03.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrschm_090334_03.sql $BANNER_HOME/links
+cp szrschm_090334_exists.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrschm_090334_exists.sql $BANNER_HOME/links
+
+# Tabla SZVABJR
+cp szvabjr_090334_00.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szvabjr_090334_00.sql $BANNER_HOME/links
+cp szvabjr_090334_01.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szvabjr_090334_01.sql $BANNER_HOME/links
+cp szvabjr_090334_02.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szvabjr_090334_02.sql $BANNER_HOME/links
+cp szvabjr_090334_03.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szvabjr_090334_03.sql $BANNER_HOME/links
+cp szvabjr_090334_exists.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szvabjr_090334_exists.sql $BANNER_HOME/links
+
+# Tabla SZVACAT
+cp szvacat_090334_00.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szvacat_090334_00.sql $BANNER_HOME/links
+cp szvacat_090334_01.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szvacat_090334_01.sql $BANNER_HOME/links
+cp szvacat_090334_02.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szvacat_090334_02.sql $BANNER_HOME/links
+cp szvacat_090334_03.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szvacat_090334_03.sql $BANNER_HOME/links
+cp szvacat_090334_exists.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szvacat_090334_exists.sql $BANNER_HOME/links
+
+# Tabla SZRSTCR
+cp szrstcr_083102_00.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrstcr_083102_00.sql $BANNER_HOME/links
+cp szrstcr_083102_01.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrstcr_083102_01.sql $BANNER_HOME/links
+cp szrstcr_083102_02.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrstcr_083102_02.sql $BANNER_HOME/links
+cp szrstcr_083102_03.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrstcr_083102_03.sql $BANNER_HOME/links
+cp szrstcr_083102_exists.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrstcr_083102_exists.sql $BANNER_HOME/links
+
+
+# Tabla SZRGCHG
+cp szrgchg_090334_00.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrgchg_090334_00.sql $BANNER_HOME/links
+cp szrgchg_090334_01.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrgchg_090334_01.sql $BANNER_HOME/links
+cp szrgchg_090334_02.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrgchg_090334_02.sql $BANNER_HOME/links
+cp szrgchg_090334_03.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrgchg_090334_03.sql $BANNER_HOME/links
+cp szrgchg_090334_exists.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrgchg_090334_exists.sql $BANNER_HOME/links
+
+
+# Tabla SZREQIV
+cp szreqiv_090334_00.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szreqiv_090334_00.sql $BANNER_HOME/links
+cp szreqiv_090334_01.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szreqiv_090334_01.sql $BANNER_HOME/links
+cp szreqiv_090334_02.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szreqiv_090334_02.sql $BANNER_HOME/links
+cp szreqiv_090334_03.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szreqiv_090334_03.sql $BANNER_HOME/links
+cp szreqiv_090334_exists.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szreqiv_090334_exists.sql $BANNER_HOME/links
+
+# Tabla SZTLSCH
+cp sztlsch_083102_00.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/sztlsch_083102_00.sql $BANNER_HOME/links
+cp sztlsch_083102_01.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/sztlsch_083102_01.sql $BANNER_HOME/links
+cp sztlsch_083102_02.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/sztlsch_083102_02.sql $BANNER_HOME/links
+cp sztlsch_083102_exists.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/sztlsch_083102_exists.sql $BANNER_HOME/links
+
+# Tabla SZTVAGR
+cp sztvagr_083102_00.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/sztvagr_083102_00.sql $BANNER_HOME/links
+cp sztvagr_083102_01.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/sztvagr_083102_01.sql $BANNER_HOME/links
+cp sztvagr_083102_02.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/sztvagr_083102_02.sql $BANNER_HOME/links
+cp sztvagr_083102_exist.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/sztvagr_083102_exist.sql $BANNER_HOME/links
+
+# Tabla SZTVEEQ
+cp sztveeq_083102_00.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/sztveeq_083102_00.sql $BANNER_HOME/links
+cp sztveeq_083102_01.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/sztveeq_083102_01.sql $BANNER_HOME/links
+cp sztveeq_083102_02.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/sztveeq_083102_02.sql $BANNER_HOME/links
+cp sztveeq_083102_exist.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/sztveeq_083102_exist.sql $BANNER_HOME/links
+
+# Tabla SZTVSCH
+cp sztvsch_083102_00.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/sztvsch_083102_00.sql $BANNER_HOME/links
+cp sztvsch_083102_01.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/sztvsch_083102_01.sql $BANNER_HOME/links
+cp sztvsch_083102_02.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/sztvsch_083102_02.sql $BANNER_HOME/links
+cp sztvsch_083102_exist.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/sztvsch_083102_exist.sql $BANNER_HOME/links
+
+# Tabla SZRABSC
+cp szrabsc_083102_00.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrabsc_083102_00.sql $BANNER_HOME/links
+cp szrabsc_083102_01.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrabsc_083102_01.sql $BANNER_HOME/links
+cp szrabsc_083102_02.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrabsc_083102_02.sql $BANNER_HOME/links
+cp szrabsc_083102_exists.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrabsc_083102_exists.sql $BANNER_HOME/links
+
+#Altr Table SHRGCOM
+cp shrgcom_090334_01.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/shrgcom_090334_01.sql $BANNER_HOME/links
+cp shrgcom_alter_script.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/shrgcom_alter_script.sql $BANNER_HOME/links
+
+cp sz_crn_abscences_transfer.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/sz_crn_abscences_transfer.sql $BANNER_HOME/links
+
+cp sz_fgrde_entry_upd.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/sz_fgrde_entry_upd.sql $BANNER_HOME/links
+
+cp sztstcr_01.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/sztstcr_01.sql $BANNER_HOME/links
+
+cp sztstcr.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/sztstcr.sql $BANNER_HOME/links
+
+cp sotsatr.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/sotsatr.sql $BANNER_HOME/links
+
+cp sotatrk.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/sotatrk.sql $BANNER_HOME/links
+
+# Alta de Objetos en Banner Formas y ProC
+cp szaandl_090334_objs.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szaandl_090334_objs.sql $BANNER_HOME/links
+cp szalfda_090334_objs.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szalfda_090334_objs.sql $BANNER_HOME/links
+cp szvabjr_090334_objs.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szvabjr_090334_objs.sql $BANNER_HOME/links
+cp szaabjr_090334_objs.sql $MODS_HOME/plus
+${LN}$MODS_HOME/plus/szaabjr_090334_objs.sql $BANNER_HOME/links
+cp szamrks_090334_objs.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szamrks_090334_objs.sql $BANNER_HOME/links
+cp szaabxt_090334_objs.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szaabxt_090334_objs.sql $BANNER_HOME/links
+cp szaeqiv_090334_objs.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szaeqiv_090334_objs.sql $BANNER_HOME/links
+cp szaftop_090334_objs.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szaftop_090334_objs.sql $BANNER_HOME/links
+cp szagsma_090334_objs.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szagsma_090334_objs.sql $BANNER_HOME/links
+cp szaschc_090334_objs.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szaschc_090334_objs.sql $BANNER_HOME/links
+cp szvsaca_090334_objs.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szvsaca_090334_objs.sql $BANNER_HOME/links
+cp szaschm_090334_objs.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szaschm_090334_objs.sql $BANNER_HOME/links
+
+cp szpcanp_083102_objs.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szpcanp_083102_objs.sql $BANNER_HOME/links
+cp szpcoav_083102_objs.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szpcoav_083102_objs.sql $BANNER_HOME/links
+cp szpeqiv_083102_objs.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szpeqiv_083102_objs.sql $BANNER_HOME/links
+cp szpgchg_083102_objs.sql $MODS_HOME/plus
+${LN}$MODS_HOME/plus/szpgchg_083102_objs.sql $BANNER_HOME/links
+cp szproll_083102_objs.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szproll_083102_objs.sql $BANNER_HOME/links
+cp szptrns_083102_objs.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szptrns_083102_objs.sql $BANNER_HOME/links
+cp szrroll_083102_objs.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szrroll_083102_objs.sql $BANNER_HOME/links
+cp szpamec_083102_objs.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szpamec_083102_objs.sql $BANNER_HOME/links
+cp szpcada_083102_objs.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szpcada_083102_objs.sql $BANNER_HOME/links
+cp szpcasc_083102_objs.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szpcasc_083102_objs.sql $BANNER_HOME/links
+cp szpcasd_083102_objs.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szpcasd_083102_objs.sql $BANNER_HOME/links
+cp szpcmes_083102_objs.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szpcmes_083102_objs.sql $BANNER_HOME/links
+cp szpmrks_083102_objs.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/szpmrks_083102_objs.sql $BANNER_HOME/links
+
+
+cp utm_install_mod002.sql $MODS_HOME/plus
+${LN} $MODS_HOME/plus/utm_install_mod002.sql $BANNER_HOME/links
+
+#
+echo ... Done Migrating PLUS Objects...
+#
+
+#
+# COPY STUDENT MISC
+#
+echo .
+echo Migrating Misc Objects...
+#
+cd ${sct_start_dir}
+if [ ! -d $MODS_HOME/misc ] ; then mkdir -p $MODS_HOME/misc ; fi
+
+cp UTM_MX-002_STUENAH090334en.txt $MODS_HOME/misc
+${LN} $MODS_HOME/misc/UTM_MX-002_STUENAH090334en.txt $BANNER_HOME/links
+
+echo ... Done Migrating MISC Objects...
+#
+
+
+#
+# COPY student VIEWS
+#
+echo .
+echo Migrating Views Objects...
+#
+cd ${sct_start_dir}
+if [ ! -d $MODS_HOME/views ] ; then mkdir -p $MODS_HOME/views ; fi
+cp szvabxt.sql $MODS_HOME/views
+${LN} $MODS_HOME/views/szvabxt.sql $BANNER_HOME/links
+cp szvvabj.sql $MODS_HOME/views
+${LN} $MODS_HOME/views/szvvabj.sql $BANNER_HOME/links
+
+echo ... Done Migrating VIEWS Objects...
+#
+
